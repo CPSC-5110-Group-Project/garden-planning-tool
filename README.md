@@ -1,6 +1,6 @@
 # Garden Planning Tool
 
-A collaborative application for planning and managing garden beds.
+Application for planning and managing gardens.
 
 ## Project Structure
 - `/backend`: FastAPI service (Python 3.14)
