@@ -24,6 +24,3 @@ Application for planning and managing gardens.
 2. `npm install`
 3. `cp .env.example .env.local`
 4. `npm run dev` (Runs on port 5173)
-
-The API will be available at `http://127.0.0.1:8000`. 
-Check `http://127.0.0.1:8000/docs` for the interactive API documentation.
