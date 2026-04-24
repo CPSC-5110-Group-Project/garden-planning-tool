@@ -1,9 +1,27 @@
+import sys
+import logging
+import json
+from contextlib import asynccontextmanager
+from fastapi.responses import Response
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import text
-from db import engine
+from db import init_db, get_db_status
 
-app = FastAPI()
+logger = logging.getLogger("uvicorn.error")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("Initializing database...")
+    try:
+        init_db() 
+        logger.info("Database initialization complete.")
+    except Exception as e:
+        logger.error(f"Database initialization failed: {e}")
+        sys.exit(1)
+    
+    yield
+
+app = FastAPI(lifespan=lifespan)
 
 origins = [
     "http://localhost:5173",
@@ -23,15 +41,17 @@ def read_root():
 
 @app.get("/health")
 def health_check():
-    try:
-        with engine.connect() as conn:
-            conn.execute(text("SELECT 1"))
-        db_status = "connected"
-    except Exception as e:
-        db_status = f"error: {str(e)}"
+    db_info = get_db_status()
 
-    return {
-        "status": "healthy",
+    is_healthy = db_info.get("status") == "connected"
+
+    content = {
+        "status": "up" if is_healthy else "down",
         "version": "0.1.0",
-        "database": db_status
+        "database": db_info
     }
+
+    return Response(
+        content=json.dumps(content, indent=4), 
+        media_type="application/json"
+    )
