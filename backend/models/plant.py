@@ -61,6 +61,7 @@ class Plant(Base):
     poisonous_to_pets = Column(Boolean, nullable=True)
     description = Column(Text, nullable=True)
     default_image = Column(JSONB, nullable=True)                 
+    image_url = Column(String, nullable=True)   # permanent Supabase Storage URL (WebP)
 
     # --- Sync metadata ---
     last_synced = Column(DateTime(timezone=True), nullable=True)
