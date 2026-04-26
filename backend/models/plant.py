@@ -14,7 +14,7 @@ class Plant(Base):
     scientific_name = Column(String, nullable=True)              
     other_name = Column(String, nullable=True)                   
     family = Column(String, nullable=True)
-    hybrid = Column(Integer, nullable=True)
+    hybrid = Column(String, nullable=True)
     authority = Column(String, nullable=True)
     subspecies = Column(String, nullable=True)
     cultivar = Column(String, nullable=True)
