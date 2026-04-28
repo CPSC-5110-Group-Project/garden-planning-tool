@@ -1,0 +1,68 @@
+from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import relationship
+from datetime import datetime, timezone
+from db import Base
+
+
+class Plant(Base):
+    __tablename__ = "plants"
+
+    id = Column(Integer, primary_key=True, index=True)
+    perenual_id = Column(Integer, unique=True, nullable=True)    
+    common_name = Column(String, nullable=False)
+    scientific_name = Column(String, nullable=True)              
+    other_name = Column(String, nullable=True)                   
+    family = Column(String, nullable=True)
+    hybrid = Column(String, nullable=True)
+    authority = Column(String, nullable=True)
+    subspecies = Column(String, nullable=True)
+    cultivar = Column(String, nullable=True)
+    variety = Column(String, nullable=True)
+    species_epithet = Column(String, nullable=True)
+    genus = Column(String, nullable=True)
+    origin = Column(String, nullable=True)                       
+    type = Column(String, nullable=True)
+    dimensions = Column(JSONB, nullable=True)                    
+    cycle = Column(String, nullable=True)
+    attracts = Column(String, nullable=True)                     
+    propagation = Column(String, nullable=True)                  
+    hardiness = Column(JSONB, nullable=True)                     
+    hardiness_location = Column(JSONB, nullable=True)            
+    watering = Column(String, nullable=True)
+    watering_general_benchmark = Column(JSONB, nullable=True)    
+    sunlight = Column(String, nullable=True)                     
+    pruning_month = Column(String, nullable=True)                
+    pruning_count = Column(JSONB, nullable=True)                 
+    seeds = Column(Boolean, nullable=True)
+    maintenance = Column(String, nullable=True)
+    care_guides = Column(String, nullable=True)                  
+    soil = Column(String, nullable=True)                         
+    growth_rate = Column(String, nullable=True)
+    drought_tolerant = Column(Boolean, nullable=True)
+    salt_tolerant = Column(Boolean, nullable=True)
+    thorny = Column(Boolean, nullable=True)
+    invasive = Column(Boolean, nullable=True)
+    tropical = Column(Boolean, nullable=True)
+    indoor = Column(Boolean, nullable=True)
+    care_level = Column(String, nullable=True)
+    pest_susceptibility = Column(String, nullable=True)          
+    flowers = Column(Boolean, nullable=True)
+    flowering_season = Column(String, nullable=True)
+    cones = Column(Boolean, nullable=True)
+    fruits = Column(Boolean, nullable=True)
+    edible_fruit = Column(Boolean, nullable=True)
+    harvest_season = Column(String, nullable=True)
+    leaf = Column(Boolean, nullable=True)
+    edible_leaf = Column(Boolean, nullable=True)
+    cuisine = Column(Boolean, nullable=True)
+    medicinal = Column(Boolean, nullable=True)
+    poisonous_to_humans = Column(Boolean, nullable=True)
+    poisonous_to_pets = Column(Boolean, nullable=True)
+    description = Column(Text, nullable=True)
+    default_image = Column(JSONB, nullable=True)                 
+    image_url = Column(String, nullable=True)   # permanent Supabase Storage URL (WebP)
+
+    # --- Sync metadata ---
+    last_synced = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
