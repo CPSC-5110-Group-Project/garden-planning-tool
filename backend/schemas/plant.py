@@ -4,21 +4,20 @@ from typing import Optional, Any
 
 
 class PlantSummary(BaseModel):
-    id: int
+    perenual_id: int
     common_name: str
     scientific_name: Optional[str] = None
     cycle: Optional[str] = None
     watering: Optional[str] = None
     sunlight: Optional[str] = None
     care_level: Optional[str] = None
-    default_image: Optional[Any] = None
+    image_url: Optional[str] = None
 
     class Config:
         from_attributes = True
 
 
 class PlantResponse(BaseModel):
-    id: int
     perenual_id: Optional[int] = None
     common_name: str
     scientific_name: Optional[str] = None
