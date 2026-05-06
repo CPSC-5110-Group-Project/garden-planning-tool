@@ -14,7 +14,7 @@ def get_plants(db: Session, skip: int = 0, limit: int = 100):
             Plant.care_level,
             Plant.image_url,
         )
-    ).offset(skip).limit(limit).all()
+    ).order_by(Plant.perenual_id).offset(skip).limit(limit).all()
 
 
 def get_plant(db: Session, perenual_id: int):
