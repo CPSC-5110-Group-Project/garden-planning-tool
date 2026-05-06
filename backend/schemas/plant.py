@@ -1,6 +1,8 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional, Any
+from typing import Optional, Any, Generic, TypeVar
+
+T = TypeVar("T")
 
 
 class PlantSummary(BaseModel):
@@ -38,10 +40,30 @@ class PlantResponse(BaseModel):
     poisonous_to_humans: Optional[bool] = None
     poisonous_to_pets: Optional[bool] = None
     description: Optional[str] = None
-    default_image: Optional[Any] = None
     image_url: Optional[str] = None
     created_at: datetime
     last_synced: Optional[datetime] = None
 
     class Config:
         from_attributes = True
+
+
+class PaginationLinks(BaseModel):
+    first: str
+    last: str
+    next: Optional[str] = None
+    prev: Optional[str] = None
+    self: str
+
+
+class PaginationMeta(BaseModel):
+    total: int
+    page: int
+    limit: int
+    total_pages: int
+
+
+class PaginatedResponse(BaseModel, Generic[T]):
+    data: list[T]
+    links: PaginationLinks
+    meta: PaginationMeta
