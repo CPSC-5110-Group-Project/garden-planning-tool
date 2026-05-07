@@ -1,33 +1,28 @@
 import { useState, useRef, useEffect } from 'react';
 import Konva from 'konva';
 import { Group, Rect, Text, Transformer } from 'react-konva';
-import Plot from './Plot';
-import { type Plot as PlotData, type Garden } from '../types/garden.ts';
+import { type Garden } from '../types/garden.ts';
 
 interface GardenProps {
+    name: string;
     x: number;
     y: number;
     width: number;
     height: number;
     scale: number;
-    plots: PlotData[];
     selectedId: string | null;
-    onSelect: (id: string | null) => void;
-    onMove: (id: string, x: number, y: number) => void;
-    onResize: (id: string, width: number, height: number) => void;
+    children?: React.ReactNode;
 }
 
 export default function Garden({
+    name,
     x,
     y,
     width,
     height,
     scale,
-    plots,
     selectedId,
-    onSelect,
-    onMove,
-    onResize,
+    children,
 }: GardenProps) {
     const trRef = useRef<Konva.Transformer>(null);
     const plotRefs = useRef<Record<string, Konva.Node>>({});
@@ -81,35 +76,12 @@ export default function Garden({
             <Text
                 x={0}
                 y={-20 / scale}
-                text="Garden Area"
+                text={name}
                 fontSize={14 / scale}
                 fill={isHovered ? activeColor : '#888'}
                 fontStyle="bold"
             />
-            {plots.map((plot) => (
-                <Plot
-                    key={plot.id}
-                    {...plot}
-                    gardenWidth={width}
-                    gardenHeight={height}
-                    onAttach={handleAttach}
-                    isSelected={selectedId === plot.id}
-                    onSelect={() => onSelect(plot.id)}
-                    onDragEnd={(e) =>
-                        onMove(plot.id, e.target.x(), e.target.y())
-                    }
-                    onTransformEnd={(e) => {
-                        const node = e.target;
-                        onResize(
-                            plot.id,
-                            node.width() * node.scaleX(),
-                            node.height() * node.scaleY()
-                        );
-                        node.setAttrs({ scaleX: 1, scaleY: 1 });
-                    }}
-                />
-            ))}
-
+            {children}
             <Transformer
                 ref={trRef}
                 rotateEnabled={false}
