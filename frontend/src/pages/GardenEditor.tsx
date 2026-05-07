@@ -1,11 +1,13 @@
-import { useState } from 'react';
-
+import { useState, useEffect, useRef } from 'react';
 import { useGardenData } from '../hooks/useGardenData';
+import { Transformer } from 'react-konva';
+import Konva from 'konva';
 
 import EditorLayout from '../components/layout/EditorLayout';
 import Canvas from '../components/Canvas';
 import Garden from '../components/Garden';
 import Plot from '../components/Plot';
+import Plant from '../components/Plant';
 import FeaturePanel from '../components/FeaturePanel';
 import GardenNameModal from '../components/GardenNameModal';
 
@@ -16,6 +18,8 @@ export default function GardenEditor() {
 
     const [isNaming, setIsNaming] = useState(false);
     const [pendingCoords, setPendingCoords] = useState({ x: 0, y: 0 });
+    const trRef = useRef<Konva.Transformer>(null);
+    const plotRefs = useRef<Record<string, Konva.Node>>({});
 
     const triggerNamingModal = (x: number, y: number) => {
         setPendingCoords({ x, y });
@@ -26,6 +30,29 @@ export default function GardenEditor() {
         addGarden(name, pendingCoords.x, pendingCoords.y);
         setIsNaming(false);
     };
+
+    const handleAttach = (id: string, node: Konva.Node | null) => {
+        if (node) {
+            plotRefs.current[id] = node;
+        } else {
+            delete plotRefs.current[id];
+        }
+    };
+
+    useEffect(() => {
+        const transformer = trRef.current;
+        if (!transformer) return;
+
+        const selectedNode = selectedId ? plotRefs.current[selectedId] : null;
+
+        if (selectedNode) {
+            transformer.nodes([selectedNode]);
+            transformer.getLayer()?.batchDraw();
+        } else {
+            transformer.nodes([]);
+            transformer.getLayer()?.batchDraw();
+        }
+    }, [selectedId]);
 
     return (
         <>
@@ -58,49 +85,69 @@ export default function GardenEditor() {
                                         scale={scale}
                                         selectedId={selectedId}
                                     >
-                                        {/* {plots
-                                            .filter(
-                                                (plot) =>
-                                                    plot.gardenId === garden.id
-                                            )
-                                            .map((plot) => (
-                                                <Plot
-                                                    key={plot.id}
-                                                    {...plot}
-                                                    gardenWidth={width}
-                                                    gardenHeight={height}
-                                                    onAttach={handleAttach}
-                                                    isSelected={
-                                                        selectedId === plot.id
-                                                    }
-                                                    onSelect={() =>
-                                                        onSelect(plot.id)
-                                                    }
-                                                    onDragEnd={(e) =>
-                                                        onMove(
-                                                            plot.id,
-                                                            e.target.x(),
-                                                            e.target.y()
-                                                        )
-                                                    }
-                                                    onTransformEnd={(e) => {
-                                                        const node = e.target;
-                                                        onResize(
-                                                            plot.id,
-                                                            node.width() *
-                                                                node.scaleX(),
-                                                            node.height() *
-                                                                node.scaleY()
-                                                        );
-                                                        node.setAttrs({
-                                                            scaleX: 1,
-                                                            scaleY: 1,
-                                                        });
-                                                    }}
-                                                />
-                                            ))} */}
+                                        {plots.map((plot) => (
+                                            <Plot
+                                                key={plot.id}
+                                                {...plot}
+                                                gardenWidth={
+                                                    garden.dimensions.width
+                                                }
+                                                gardenHeight={
+                                                    garden.dimensions.height
+                                                }
+                                                onAttach={handleAttach}
+                                                isSelected={
+                                                    selectedId === plot.id
+                                                }
+                                                onSelect={() =>
+                                                    setSelectedId(plot.id)
+                                                }
+                                                onDragEnd={(e) =>
+                                                    handleMove(
+                                                        plot.id,
+                                                        e.target.x(),
+                                                        e.target.y()
+                                                    )
+                                                }
+                                                onTransformEnd={(e) => {
+                                                    const node = e.target;
+                                                    handleResize(
+                                                        plot.id,
+                                                        node.width() *
+                                                            node.scaleX(),
+                                                        node.height() *
+                                                            node.scaleY()
+                                                    );
+                                                    node.setAttrs({
+                                                        scaleX: 1,
+                                                        scaleY: 1,
+                                                    });
+                                                }}
+                                            >
+                                                {plot.plants.map((_, i) => (
+                                                    <Plant
+                                                        key={i}
+                                                        index={i}
+                                                        parentWidth={plot.width}
+                                                    />
+                                                ))}
+                                            </Plot>
+                                        ))}
                                     </Garden>
                                 ))}
+                                <Transformer
+                                    ref={trRef}
+                                    rotateEnabled={false}
+                                    keepRatio={false}
+                                    boundBoxFunc={(oldBox, newBox) => {
+                                        if (
+                                            newBox.width < 20 ||
+                                            newBox.height < 20
+                                        )
+                                            return oldBox;
+                                        return newBox;
+                                    }}
+                                />
                             </>
                         )}
                     </Canvas>

@@ -1,6 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
-import Konva from 'konva';
-import { Group, Rect, Text, Transformer } from 'react-konva';
+import { useState } from 'react';
+import { Group, Rect, Text } from 'react-konva';
 import { type Garden } from '../types/garden.ts';
 
 interface GardenProps {
@@ -21,39 +20,11 @@ export default function Garden({
     width,
     height,
     scale,
-    selectedId,
     children,
 }: GardenProps) {
-    const trRef = useRef<Konva.Transformer>(null);
-    const plotRefs = useRef<Record<string, Konva.Node>>({});
-
     const [isHovered, setIsHovered] = useState(false);
-
     const activeColor = '#4CAF50';
     const idleColor = '#333';
-
-    const handleAttach = (id: string, node: Konva.Node | null) => {
-        if (node) {
-            plotRefs.current[id] = node;
-        } else {
-            delete plotRefs.current[id];
-        }
-    };
-
-    useEffect(() => {
-        const transformer = trRef.current;
-        if (!transformer) return;
-
-        const selectedNode = selectedId ? plotRefs.current[selectedId] : null;
-
-        if (selectedNode) {
-            transformer.nodes([selectedNode]);
-            transformer.getLayer()?.batchDraw();
-        } else {
-            transformer.nodes([]);
-            transformer.getLayer()?.batchDraw();
-        }
-    }, [selectedId]);
 
     return (
         <Group
@@ -82,15 +53,6 @@ export default function Garden({
                 fontStyle="bold"
             />
             {children}
-            <Transformer
-                ref={trRef}
-                rotateEnabled={false}
-                keepRatio={false}
-                boundBoxFunc={(oldBox, newBox) => {
-                    if (newBox.width < 20 || newBox.height < 20) return oldBox;
-                    return newBox;
-                }}
-            />
         </Group>
     );
 }
