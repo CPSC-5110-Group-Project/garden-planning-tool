@@ -9,7 +9,7 @@ class Plant(Base):
     __tablename__ = "plants"
 
     id = Column(Integer, primary_key=True, index=True)
-    perenual_id = Column(Integer, unique=True, nullable=True)    
+    perenual_id = Column(Integer, unique=True, nullable=True, index=True)    
     common_name = Column(String, nullable=False)
     scientific_name = Column(String, nullable=True)              
     other_name = Column(String, nullable=True)                   
