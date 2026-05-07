@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     SUPABASE_SECRET_KEY: str
     PERENUAL_API_KEY: str
     WEATHER_API_KEY: str
+    GROQ_API_KEY: str
 
     model_config = SettingsConfigDict(env_file=".env")
 

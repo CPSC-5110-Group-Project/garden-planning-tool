@@ -6,6 +6,8 @@ from fastapi.responses import Response
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from db import init_db, get_db_status
+from api.chat import router as chat_router
+
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -33,7 +35,9 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+
 )
+app.include_router(chat_router, prefix="/api")
 
 @app.get("/")
 def read_root():
