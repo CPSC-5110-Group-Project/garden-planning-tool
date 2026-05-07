@@ -5,7 +5,7 @@ export function useGardenData() {
     const [gardens, setGardens] = useState<Garden[]>([
         {
             id: 'garden1',
-            name: 'backyard',
+            name: 'Garden Area',
             x: 50,
             y: 100,
             dimensions: { width: 700, height: 500 },
@@ -26,10 +26,10 @@ export function useGardenData() {
         { id: 'plot3', x: 550, y: 280, width: 80, height: 200, plants: [1, 2] },
     ]);
 
-    const addGarden = (x: number, y: number) => {
+    const addGarden = (name: string, x: number, y: number) => {
         const newGarden: Garden = {
             id: `garden-${Date.now()}`,
-            name: 'New Garden Area',
+            name: name,
             x,
             y,
             dimensions: { width: 700, height: 500 },
