@@ -7,6 +7,7 @@ export default function PlantLibrary() {
   const [search, setSearch] = useState('')
   const [submittedSearch, setSubmittedSearch] = useState('')
   const [page, setPage] = useState(1)
+  const [pageInput, setPageInput] = useState('1')
 
   const { data, isLoading, isError } = useQuery({
     queryKey: submittedSearch ? ['plants', 'search', submittedSearch, page] : ['plants', 'list', page],
@@ -15,6 +16,11 @@ export default function PlantLibrary() {
       : fetchPlants(page, 20),
   })
 
+  const goToPage = (newPage: number) => {
+    setPage(newPage)
+    setPageInput(String(newPage))
+  }
+
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value)
   }
@@ -22,7 +28,7 @@ export default function PlantLibrary() {
   const handleSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       setSubmittedSearch(search)
-      setPage(1)
+      goToPage(1)
     }
   }
 
@@ -42,7 +48,7 @@ export default function PlantLibrary() {
             onClick={() => {
               setSearch('')
               setSubmittedSearch('')
-              setPage(1)
+              goToPage(1)
             }}
             className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
           >
@@ -60,17 +66,38 @@ export default function PlantLibrary() {
       </div>
 
       {data && (
-        <div className="flex justify-between text-xs text-gray-400 mt-2">
+        <div className="flex justify-between items-center text-xs text-gray-400 mt-2">
           <button
-            onClick={() => setPage(p => p - 1)}
+            onClick={() => goToPage(page - 1)}
             disabled={page === 1}
             className="disabled:opacity-30"
           >
             Previous
           </button>
-          <span>Page {data.meta.page} of {data.meta.total_pages}</span>
+          <span className="flex items-center gap-1">
+            Page
+            <input
+              type="number"
+              value={pageInput}
+              min={1}
+              max={data.meta.total_pages}
+              onChange={e => setPageInput(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  const val = Math.min(Math.max(1, Number(pageInput) || 1), data.meta.total_pages)
+                  goToPage(val)
+                }
+              }}
+              onBlur={() => {
+                const val = Math.min(Math.max(1, Number(pageInput) || 1), data.meta.total_pages)
+                goToPage(val)
+              }}
+              className="w-10 text-center bg-gray-800 border border-gray-600 rounded px-1 py-0.5 text-white focus:outline-none focus:border-green-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+            of {data.meta.total_pages}
+          </span>
           <button
-            onClick={() => setPage(p => p + 1)}
+            onClick={() => goToPage(page + 1)}
             disabled={page === data.meta.total_pages}
             className="disabled:opacity-30"
           >
