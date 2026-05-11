@@ -11,7 +11,6 @@ export default function PlantTooltip({ data, delay = 400 }: TooltipProps) {
     const [shouldShow, setShouldShow] = useState(false);
     const [activeData, setActiveData] = useState<{ plant: Plant; x: number; y: number } | null>(null);
 
-    // Sync data during render to avoid the "activeData" sync warning
     if (data && data !== activeData) {
         setActiveData(data);
     }

@@ -3,29 +3,18 @@ import { type Plant } from '../types/garden';
 
 export default function PlantCard({ plant }: { plant: Plant }) {
     const handleDragStart = (e: React.DragEvent) => {
-        // 1. Set the data for the drop logic
-        e.dataTransfer.setData(
-            'application/react-garden-plant',
-            JSON.stringify(plant)
-        );
+        e.dataTransfer.setData('application/react-garden-plant', JSON.stringify(plant));
         e.dataTransfer.effectAllowed = 'move';
 
-        // 2. Create a temporary element for the ghost image
         const dragIcon = document.createElement('div');
         dragIcon.innerHTML = '🌱';
         dragIcon.style.fontSize = '32px';
         dragIcon.style.position = 'absolute';
-        dragIcon.style.top = '-1000px'; // Move it far off-screen
-        dragIcon.style.opacity = '0.6'; // Make it semi-transparent
+        dragIcon.style.top = '-1000px';
+        dragIcon.style.opacity = '0.6';
         document.body.appendChild(dragIcon);
 
-        // 3. Tell the browser to use this div as the "drag image"
-        // The numbers (16, 16) center the emoji on your cursor
         e.dataTransfer.setDragImage(dragIcon, 16, 16);
-
-        // 4. Clean up the element immediately
-        // Browsers take a "snapshot" of the element right when setDragImage is called,
-        // so we can remove the DOM node in the next tick.
         setTimeout(() => {
             document.body.removeChild(dragIcon);
         }, 0);
@@ -48,28 +37,12 @@ export default function PlantCard({ plant }: { plant: Plant }) {
                         </div>
                     )}
                 </div>
-                <div className="text-white text-sm font-medium">
-                    {plant.common_name}
-                </div>
-                <div className="text-gray-400 text-xs italic mb-2">
-                    {plant.scientific_name}
-                </div>
+                <div className="text-white text-sm font-medium">{plant.common_name}</div>
+                <div className="text-gray-400 text-xs italic mb-2">{plant.scientific_name}</div>
                 <div className="flex gap-2 flex-wrap">
-                    {plant.sunlight && (
-                        <span className="text-xs text-gray-400">
-                            ☀️ {plant.sunlight}
-                        </span>
-                    )}
-                    {plant.watering && (
-                        <span className="text-xs text-gray-400">
-                            💧 {plant.watering}
-                        </span>
-                    )}
-                    {plant.care_level && (
-                        <span className="text-xs text-gray-400">
-                            🌱 {plant.care_level}
-                        </span>
-                    )}
+                    {plant.sunlight && <span className="text-xs text-gray-400">☀️ {plant.sunlight}</span>}
+                    {plant.watering && <span className="text-xs text-gray-400">💧 {plant.watering}</span>}
+                    {plant.care_level && <span className="text-xs text-gray-400">🌱 {plant.care_level}</span>}
                 </div>
             </div>
         </div>
