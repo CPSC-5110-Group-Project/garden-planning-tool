@@ -1,46 +1,77 @@
-import { getResizedImageUrl } from '../lib/utils'
-
-export interface Plant {
-  perenual_id: number
-  common_name: string
-  scientific_name?: string | null
-  watering?: string | null
-  sunlight?: string | null
-  care_level?: string | null
-  image_url?: string | null
-}
+import { getResizedImageUrl } from '../lib/utils';
+import { type Plant } from '../types/garden';
 
 export default function PlantCard({ plant }: { plant: Plant }) {
-  return (
-    <div className="w-full bg-gray-800 border border-gray-600 rounded-lg overflow-hidden cursor-pointer hover:border-green-400 transition-colors">
-      <div className="p-3">
-        <div className="w-2/3 aspect-square mx-auto mb-3">
-          {plant.image_url ? (
-            <img
-              src={getResizedImageUrl(plant.image_url, 200, 200)}
-              alt={plant.common_name}
-              className="w-full h-full object-cover rounded-md"
-            />
-          ) : (
-            <div className="w-full h-full bg-gray-700 rounded-md flex items-center justify-center">
-              <span className="text-3xl">🌿</span>
+    const handleDragStart = (e: React.DragEvent) => {
+        // 1. Set the data for the drop logic
+        e.dataTransfer.setData(
+            'application/react-garden-plant',
+            JSON.stringify(plant)
+        );
+        e.dataTransfer.effectAllowed = 'move';
+
+        // 2. Create a temporary element for the ghost image
+        const dragIcon = document.createElement('div');
+        dragIcon.innerHTML = '🌱';
+        dragIcon.style.fontSize = '32px';
+        dragIcon.style.position = 'absolute';
+        dragIcon.style.top = '-1000px'; // Move it far off-screen
+        dragIcon.style.opacity = '0.6'; // Make it semi-transparent
+        document.body.appendChild(dragIcon);
+
+        // 3. Tell the browser to use this div as the "drag image"
+        // The numbers (16, 16) center the emoji on your cursor
+        e.dataTransfer.setDragImage(dragIcon, 16, 16);
+
+        // 4. Clean up the element immediately
+        // Browsers take a "snapshot" of the element right when setDragImage is called,
+        // so we can remove the DOM node in the next tick.
+        setTimeout(() => {
+            document.body.removeChild(dragIcon);
+        }, 0);
+    };
+    return (
+        <div className="w-full bg-gray-800 border border-gray-600 rounded-lg overflow-hidden cursor-pointer hover:border-green-400 transition-colors">
+            <div className="p-3">
+                <div className="w-2/3 aspect-square mx-auto mb-3">
+                    {plant.image_url ? (
+                        <img
+                            src={getResizedImageUrl(plant.image_url, 200, 200)}
+                            alt={plant.common_name}
+                            className="w-full h-full object-cover rounded-md"
+                            draggable
+                            onDragStart={handleDragStart}
+                        />
+                    ) : (
+                        <div className="w-full h-full bg-gray-700 rounded-md flex items-center justify-center">
+                            <span className="text-3xl">🌿</span>
+                        </div>
+                    )}
+                </div>
+                <div className="text-white text-sm font-medium">
+                    {plant.common_name}
+                </div>
+                <div className="text-gray-400 text-xs italic mb-2">
+                    {plant.scientific_name}
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                    {plant.sunlight && (
+                        <span className="text-xs text-gray-400">
+                            ☀️ {plant.sunlight}
+                        </span>
+                    )}
+                    {plant.watering && (
+                        <span className="text-xs text-gray-400">
+                            💧 {plant.watering}
+                        </span>
+                    )}
+                    {plant.care_level && (
+                        <span className="text-xs text-gray-400">
+                            🌱 {plant.care_level}
+                        </span>
+                    )}
+                </div>
             </div>
-          )}
         </div>
-        <div className="text-white text-sm font-medium">{plant.common_name}</div>
-        <div className="text-gray-400 text-xs italic mb-2">{plant.scientific_name}</div>
-        <div className="flex gap-2 flex-wrap">
-          {plant.sunlight && (
-            <span className="text-xs text-gray-400">☀️ {plant.sunlight}</span>
-          )}
-          {plant.watering && (
-            <span className="text-xs text-gray-400">💧 {plant.watering}</span>
-          )}
-          {plant.care_level && (
-            <span className="text-xs text-gray-400">🌱 {plant.care_level}</span>
-          )}
-        </div>
-      </div>
-    </div>
-  )
+    );
 }
