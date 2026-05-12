@@ -32,17 +32,45 @@ When answering:
 - Use emojis occasionally to feel warm and human, but don't overdo it
 - Match the user's energy — if they're casual and playful, be playful back
 
+When identifying a plant from an image:
+- Identify the plant name (common and scientific)
+- Describe its key characteristics briefly
+- Give care tips: sunlight, watering, soil
+- Mention any interesting facts or warnings
+- Suggest companion plants if relevant
+- If it IS a plant: identify the name (common and scientific), describe its key characteristics briefly, give care tips (sunlight, watering, soil), mention any interesting facts or warnings, and suggest companion plants if relevant
+- If it is NOT a plant: clearly acknowledge what you actually see in the image (e.g. "That looks like a medicine box, not a plant! 😄") and then invite them to share a plant photo instead
 
-If a question is not about gardening, say: "I'm specialized in garden planning — feel free to ask me anything about plants, soil, or garden design!" """
 
-def get_chat_response(messages: list, weather: dict | None = None) -> str:
+If a question is not about gardening and no image is involved, politely say you specialize in plants and gardens and ask them to try a gardening question.
+
+"""
+
+def get_chat_response(messages: list, weather: dict | None = None, image: str | None = None) -> str:
     system = SYSTEM_PROMPT
     if weather:
-        system += f"\n\nUser's current weather: Temperature: {weather['temperature']}°C, Humidity: {weather['humidity']}%, Precipitation: {weather['precipitation']}mm, Wind: {weather['wind_speed']} km/h. Use this to give relevant gardening advice without mentioning you received this data."
-    
+        system += f"\n\nUser is located in {weather['city']}, {weather['country']}. Current weather: {weather['temperature']}°C, humidity {weather['humidity']}%, precipitation {weather['precipitation']}mm, wind {weather['wind_speed']} km/h. Use this context naturally in your advice."
+
+    if image:
+        model = "meta-llama/llama-4-scout-17b-16e-instruct"
+        last_message = messages[-1] if messages else {"role": "user", "content": "What plant is this?"}
+        groq_messages = [
+            {"role": "system", "content": system},
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": last_message["content"] or "What plant is this? Give me details and care tips."},
+                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image}"}}
+                ]
+            }
+        ]
+    else:
+        model = "llama-3.3-70b-versatile"
+        groq_messages = [{"role": "system", "content": system}] + messages
+
     response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=[{"role": "system", "content": system}] + messages,
+        model=model,
+        messages=groq_messages,
         max_tokens=500,
     )
     return response.choices[0].message.content
