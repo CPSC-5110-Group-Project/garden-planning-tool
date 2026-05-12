@@ -1,16 +1,18 @@
 export interface Plant {
-    id: string;
-    name: string;
-    position: { x: number; y: number };
+    perenual_id: number;
+    common_name: string;
+    scientific_name?: string | null;
+    watering?: string | null;
+    sunlight?: string | null;
+    care_level?: string | null;
+    image_url?: string | null;
 }
 
 export interface Plot {
-    id: string;
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    plants: string[] | number[];
+    sunExposure: string;
+    isPlantable: boolean;
+    plantId?: number;
+    plant?: Plant;
 }
 
 export interface Garden {
@@ -18,6 +20,7 @@ export interface Garden {
     name: string;
     x: number;
     y: number;
-    plots: Plot[];
-    dimensions: { width: number; height: number };
+    rows: number;
+    cols: number;
+    plots: Record<string, Plot>;
 }

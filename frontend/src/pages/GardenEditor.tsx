@@ -1,25 +1,28 @@
-import { useState, useEffect, useRef } from 'react';
-import { useGardenData } from '../hooks/useGardenData';
-import { Transformer } from 'react-konva';
+import { useState, useRef, useCallback } from 'react';
 import Konva from 'konva';
+import { useGardenData } from '../hooks/useGardenData';
+import { PIXELS_PER_FOOT } from '../lib/utils';
+import { type Plant } from '../types/garden';
 
 import EditorLayout from '../components/layout/EditorLayout';
 import Canvas from '../components/Canvas';
 import Garden from '../components/Garden';
 import Plot from '../components/Plot';
-import Plant from '../components/Plant';
 import FeaturePanel from '../components/FeaturePanel';
 import GardenNameModal from '../components/GardenNameModal';
+import PlantTooltip from '../components/PlantTooltip';
 
 export default function GardenEditor() {
-    const { gardens, plots, addGarden, addPlot, handleMove, handleResize } =
-        useGardenData();
-    const [selectedId, setSelectedId] = useState<string | null>(null);
-
+    const { gardens, addGarden, handleMove, handleResize, addPlant } = useGardenData();
+    const [activeDragPlot, setActiveDragPlot] = useState<{
+        gardenId: string;
+        plotKey: string;
+    } | null>(null);
+    const [hoveredPlant, setHoveredPlant] = useState<{ plant: Plant; x: number; y: number } | null>(null);
     const [isNaming, setIsNaming] = useState(false);
     const [pendingCoords, setPendingCoords] = useState({ x: 0, y: 0 });
-    const trRef = useRef<Konva.Transformer>(null);
-    const plotRefs = useRef<Record<string, Konva.Node>>({});
+
+    const stageRef = useRef<Konva.Stage>(null);
 
     const triggerNamingModal = (x: number, y: number) => {
         setPendingCoords({ x, y });
@@ -31,37 +34,73 @@ export default function GardenEditor() {
         setIsNaming(false);
     };
 
-    const handleAttach = (id: string, node: Konva.Node | null) => {
-        if (node) {
-            plotRefs.current[id] = node;
-        } else {
-            delete plotRefs.current[id];
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        const stage = stageRef.current;
+        if (!stage) return;
+
+        stage.setPointersPositions(e);
+        const pos = stage.getRelativePointerPosition();
+        if (!pos) return;
+
+        const hit = findPlotAt(pos);
+        if (hit) {
+            if (activeDragPlot?.plotKey !== hit.plotKey || activeDragPlot?.gardenId !== hit.gardenId) {
+                setActiveDragPlot({ gardenId: hit.gardenId, plotKey: hit.plotKey });
+            }
+        } else if (activeDragPlot) {
+            setActiveDragPlot(null);
         }
     };
 
-    useEffect(() => {
-        const transformer = trRef.current;
-        if (!transformer) return;
+    const handlePlantMouseOver = useCallback((plant: Plant, x: number, y: number) => {
+        setHoveredPlant({ plant, x, y });
+    }, []);
 
-        const selectedNode = selectedId ? plotRefs.current[selectedId] : null;
+    const handlePlantMouseOut = useCallback(() => {
+        setHoveredPlant(null);
+    }, []);
 
-        if (selectedNode) {
-            transformer.nodes([selectedNode]);
-            transformer.getLayer()?.batchDraw();
-        } else {
-            transformer.nodes([]);
-            transformer.getLayer()?.batchDraw();
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        const rawData = e.dataTransfer.getData('application/react-garden-plant');
+        if (!rawData || !stageRef.current) return;
+
+        stageRef.current.setPointersPositions(e);
+        const pos = stageRef.current.getRelativePointerPosition();
+        if (!pos) return;
+
+        const hit = findPlotAt(pos);
+        if (hit && !hit.garden.plots[hit.plotKey]) {
+            addPlant(hit.gardenId, hit.plotKey, JSON.parse(rawData));
         }
-    }, [selectedId]);
+        setActiveDragPlot(null);
+    };
+
+    const findPlotAt = (pos: { x: number; y: number }) => {
+        for (const garden of Object.values(gardens)) {
+            const gWidth = garden.cols * PIXELS_PER_FOOT;
+            const gHeight = garden.rows * PIXELS_PER_FOOT;
+
+            if (pos.x >= garden.x && pos.x <= garden.x + gWidth && pos.y >= garden.y && pos.y <= garden.y + gHeight) {
+                const col = Math.floor((pos.x - garden.x) / PIXELS_PER_FOOT);
+                const row = Math.floor((pos.y - garden.y) / PIXELS_PER_FOOT);
+                return {
+                    gardenId: garden.id,
+                    plotKey: `${row}-${col}`,
+                    garden,
+                };
+            }
+        }
+        return null;
+    };
 
     return (
         <>
             <EditorLayout
                 header={
                     <div className="flex justify-between items-center w-full px-2">
-                        <h1 className="text-xl font-bold text-text-header m-0">
-                            Garden Planning Tool
-                        </h1>
+                        <h1 className="text-xl font-bold text-text-header m-0">Garden Planning Tool</h1>
                     </div>
                 }
                 sidebar={
@@ -71,106 +110,48 @@ export default function GardenEditor() {
                 }
                 panel={<FeaturePanel />}
                 canvas={
-                    <Canvas onAddGarden={triggerNamingModal}>
-                        {(_size, scale) => (
-                            <>
-                                {gardens.map((garden) => (
-                                    <Garden
-                                        key={garden.id}
-                                        name={garden.name}
-                                        x={garden.x}
-                                        y={garden.y}
-                                        width={garden.dimensions.width}
-                                        height={garden.dimensions.height}
-                                        scale={scale}
-                                        selectedId={selectedId}
-                                    >
-                                        {plots.map((plot) => (
-                                            <Plot
-                                                key={plot.id}
-                                                {...plot}
-                                                gardenWidth={
-                                                    garden.dimensions.width
-                                                }
-                                                gardenHeight={
-                                                    garden.dimensions.height
-                                                }
-                                                onAttach={handleAttach}
-                                                isSelected={
-                                                    selectedId === plot.id
-                                                }
-                                                onSelect={() =>
-                                                    setSelectedId(plot.id)
-                                                }
-                                                onDragEnd={(e) =>
-                                                    handleMove(
-                                                        plot.id,
-                                                        e.target.x(),
-                                                        e.target.y()
-                                                    )
-                                                }
-                                                onTransformEnd={(e) => {
-                                                    const node = e.target;
-                                                    handleResize(
-                                                        plot.id,
-                                                        node.width() *
-                                                            node.scaleX(),
-                                                        node.height() *
-                                                            node.scaleY()
-                                                    );
-                                                    node.setAttrs({
-                                                        scaleX: 1,
-                                                        scaleY: 1,
-                                                    });
-                                                }}
-                                            >
-                                                {plot.plants.map((_, i) => (
-                                                    <Plant
-                                                        key={i}
-                                                        index={i}
-                                                        parentWidth={plot.width}
-                                                    />
-                                                ))}
-                                            </Plot>
-                                        ))}
-                                    </Garden>
-                                ))}
-                                <Transformer
-                                    ref={trRef}
-                                    rotateEnabled={false}
-                                    keepRatio={false}
-                                    boundBoxFunc={(oldBox, newBox) => {
-                                        if (
-                                            newBox.width < 20 ||
-                                            newBox.height < 20
-                                        )
-                                            return oldBox;
-                                        return newBox;
-                                    }}
-                                />
-                            </>
-                        )}
+                    <Canvas
+                        ref={stageRef}
+                        onAddGarden={triggerNamingModal}
+                        onDragOver={handleDragOver}
+                        onDrop={handleDrop}
+                    >
+                        {() =>
+                            Object.values(gardens).map((garden) => (
+                                <Garden key={garden.id} {...garden} handleMove={handleMove} handleResize={handleResize}>
+                                    {Array.from({ length: garden.rows }).map((_, r) =>
+                                        Array.from({ length: garden.cols }).map((_, c) => {
+                                            const plotKey = `${r}-${c}`;
+                                            return (
+                                                <Plot
+                                                    key={`${garden.id}-${plotKey}`}
+                                                    x={c * PIXELS_PER_FOOT}
+                                                    y={r * PIXELS_PER_FOOT}
+                                                    data={garden.plots[plotKey]}
+                                                    isDraggingOver={
+                                                        activeDragPlot?.gardenId === garden.id &&
+                                                        activeDragPlot?.plotKey === plotKey
+                                                    }
+                                                    onPlantMouseOver={handlePlantMouseOver}
+                                                    onPlantMouseOut={handlePlantMouseOut}
+                                                />
+                                            );
+                                        })
+                                    )}
+                                </Garden>
+                            ))
+                        }
                     </Canvas>
                 }
                 footer={
                     <div className="flex justify-between items-center w-full text-[10px] uppercase tracking-widest text-text-main/60 px-2 h-full">
                         <span>Workspace • Canvas Mode</span>
-                        <button
-                            onClick={addPlot}
-                            className="bg-accent text-white px-3 py-1 rounded hover:opacity-90 active:scale-95 transition-all font-bold"
-                        >
-                            + Add Plot
-                        </button>
-                        <span>{plots.length} Total Plots</span>
+                        <span>{Object.keys(gardens).length} Total Gardens</span>
                     </div>
                 }
             />
-            {isNaming && (
-                <GardenNameModal
-                    onConfirm={handleConfirmName}
-                    onCancel={() => setIsNaming(false)}
-                />
-            )}
+            {isNaming && <GardenNameModal onConfirm={handleConfirmName} onCancel={() => setIsNaming(false)} />}
+            {hoveredPlant && <PlantTooltip data={hoveredPlant} />}
         </>
     );
 }

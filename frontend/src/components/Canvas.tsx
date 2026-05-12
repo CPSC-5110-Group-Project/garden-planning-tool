@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, type ReactNode } from 'react';
+import { useState, useRef, useEffect, forwardRef, useCallback, type ReactNode } from 'react';
 import { Stage, Layer } from 'react-konva';
 import Konva from 'konva';
 
@@ -10,9 +10,11 @@ interface CanvasSize {
 interface CanvasProps {
     children: (size: CanvasSize, scale: number) => ReactNode;
     onAddGarden: (x: number, y: number) => void;
+    onDragOver?: (e: React.DragEvent) => void;
+    onDrop?: (e: React.DragEvent) => void;
 }
 
-export default function Canvas({ children, onAddGarden }: CanvasProps) {
+const Canvas = forwardRef<Konva.Stage, CanvasProps>(({ children, onAddGarden, onDragOver, onDrop }, ref) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [size, setSize] = useState({ width: 0, height: 0 });
     const [view, setView] = useState({ x: 0, y: 0, scale: 1 });
@@ -28,7 +30,7 @@ export default function Canvas({ children, onAddGarden }: CanvasProps) {
         return () => observe.disconnect();
     }, []);
 
-    const handleZoom = (e: Konva.KonvaEventObject<WheelEvent>) => {
+    const handleZoom = useCallback((e: Konva.KonvaEventObject<WheelEvent>) => {
         e.evt.preventDefault();
         const stage = e.target.getStage();
         if (!stage) return;
@@ -43,27 +45,20 @@ export default function Canvas({ children, onAddGarden }: CanvasProps) {
         };
 
         const speedFactor = 0.001;
-        const newScale = oldScale * (1 - e.evt.deltaY * speedFactor);
-
-        const minScale = 0.1;
-        const maxScale = 5;
-        const boundedScale = Math.max(minScale, Math.min(maxScale, newScale));
+        const newScale = Math.max(0.1, Math.min(5, oldScale * (1 - e.evt.deltaY * speedFactor)));
 
         setView({
-            scale: boundedScale,
+            scale: newScale,
             x: pointer.x - mousePointTo.x * newScale,
             y: pointer.y - mousePointTo.y * newScale,
         });
-    };
+    }, []);
 
     const handleContextMenu = (e: Konva.KonvaEventObject<PointerEvent>) => {
         e.evt.preventDefault();
-
         const stage = e.target.getStage();
-        if (!stage) return;
-
-        const pointer = stage.getPointerPosition();
-        if (!pointer) return;
+        const pointer = stage?.getPointerPosition();
+        if (!stage || !pointer) return;
 
         const worldPos = {
             x: (pointer.x - stage.x()) / stage.scaleX(),
@@ -76,9 +71,12 @@ export default function Canvas({ children, onAddGarden }: CanvasProps) {
     return (
         <div
             ref={containerRef}
-            className="w-full h-full bg-code-bg overflow-hidden relative"
+            className="w-full h-full bg-main overflow-hidden relative"
+            onDragOver={onDragOver}
+            onDrop={onDrop}
         >
             <Stage
+                ref={ref}
                 width={size.width}
                 height={size.height}
                 draggable
@@ -89,7 +87,7 @@ export default function Canvas({ children, onAddGarden }: CanvasProps) {
                 onWheel={handleZoom}
                 onContextMenu={handleContextMenu}
                 onMouseDown={() => {
-                    if (menu.visible) setMenu({ ...menu, visible: false });
+                    if (menu.visible) setMenu((prev) => ({ ...prev, visible: false }));
                 }}
                 onDragEnd={(e) => {
                     if (e.target === e.target.getStage()) {
@@ -103,9 +101,10 @@ export default function Canvas({ children, onAddGarden }: CanvasProps) {
             >
                 <Layer>{children(size, view.scale)}</Layer>
             </Stage>
+
             {menu.visible && (
                 <div
-                    className="absolute z-50 bg-bg-main border border-border-main shadow-xl rounded py-1 w-32"
+                    className="absolute z-50 bg-gray-800 border border-gray-600 shadow-2xl rounded-md py-1 w-40 overflow-hidden"
                     style={{
                         left: menu.x * view.scale + view.x,
                         top: menu.y * view.scale + view.y,
@@ -114,9 +113,9 @@ export default function Canvas({ children, onAddGarden }: CanvasProps) {
                     <button
                         onClick={() => {
                             onAddGarden(menu.x, menu.y);
-                            setMenu({ ...menu, visible: false });
+                            setMenu((prev) => ({ ...prev, visible: false }));
                         }}
-                        className="w-full text-left px-3 py-2 text-sm hover:bg-accent hover:text-white"
+                        className="w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-green-600 hover:text-white transition-colors"
                     >
                         + Add Garden
                     </button>
@@ -124,4 +123,7 @@ export default function Canvas({ children, onAddGarden }: CanvasProps) {
             )}
         </div>
     );
-}
+});
+
+Canvas.displayName = 'Canvas';
+export default Canvas;
