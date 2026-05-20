@@ -1,7 +1,11 @@
+import { useState } from 'react';
 import { getResizedImageUrl } from '../lib/utils';
 import { type Plant } from '../types/garden';
+import PlantInfoPopup from './PlantInfoPopUp'
 
 export default function PlantCard({ plant }: { plant: Plant }) {
+    const [isPopupOpen, setIsPopupOpen] = useState(false);
+
     const handleDragStart = (e: React.DragEvent) => {
         e.dataTransfer.setData('application/react-garden-plant', JSON.stringify(plant));
         e.dataTransfer.effectAllowed = 'move';
@@ -20,7 +24,9 @@ export default function PlantCard({ plant }: { plant: Plant }) {
         }, 0);
     };
     return (
-        <div className="w-full bg-gray-800 border border-gray-600 rounded-lg overflow-hidden cursor-pointer hover:border-green-400 transition-colors">
+        <div 
+            onClick={() => setIsPopupOpen(true)}
+            className="w-full bg-gray-800 border border-gray-600 rounded-lg overflow-hidden cursor-pointer hover:border-green-400 transition-colors">
             <div className="p-3">
                 <div className="w-2/3 aspect-square mx-auto mb-3">
                     {plant.image_url ? (
@@ -45,6 +51,7 @@ export default function PlantCard({ plant }: { plant: Plant }) {
                     {plant.care_level && <span className="text-xs text-gray-400">🌱 {plant.care_level}</span>}
                 </div>
             </div>
+            {isPopupOpen && <PlantInfoPopup plant={plant} onClose={() => setIsPopupOpen(false)} />}
         </div>
     );
 }
