@@ -40,5 +40,5 @@ export const getPlantIcon = (daysElapsed: number, plant?: Plant): string => {
 
     if (progress < 0.25) return '🌱';
     if (progress < 0.6) return '🌿';
-    return '🌻';
+    return '🌹';
 };

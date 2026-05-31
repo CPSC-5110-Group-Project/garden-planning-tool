@@ -19,6 +19,8 @@ export interface Plot {
     plantId?: number;
     plant?: Plant;
     plantedAt?: string | null;
+    isTreeChild?: boolean;
+    anchorKey?: string;
 }
 
 export interface Garden {
