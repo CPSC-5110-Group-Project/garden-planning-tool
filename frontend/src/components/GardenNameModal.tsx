@@ -14,11 +14,9 @@ export default function GardenNameModal({ onConfirm, onCancel }: ModalProps) {
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/50 backdrop-blur-sm">
             <div className="bg-bg-main border border-border-main p-6 rounded-lg shadow-xl w-80">
-                <h3 className="text-lg font-bold mb-4 text-text-header">
-                    New Garden Name
-                </h3>
+                <h3 className="text-lg font-bold mb-4 text-text-header">New Garden Name</h3>
                 <form onSubmit={handleSubmit}>
                     <input
                         autoFocus

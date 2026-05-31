@@ -19,6 +19,7 @@ export default function PlantCard({ plant }: { plant: Plant }) {
             document.body.removeChild(dragIcon);
         }, 0);
     };
+
     return (
         <div className="w-full bg-gray-800 border border-gray-600 rounded-lg overflow-hidden cursor-pointer hover:border-green-400 transition-colors">
             <div className="p-3">
@@ -39,10 +40,18 @@ export default function PlantCard({ plant }: { plant: Plant }) {
                 </div>
                 <div className="text-white text-sm font-medium">{plant.common_name}</div>
                 <div className="text-gray-400 text-xs italic mb-2">{plant.scientific_name}</div>
-                <div className="flex gap-2 flex-wrap">
+
+                <div className="flex gap-2 flex-wrap mb-2">
                     {plant.sunlight && <span className="text-xs text-gray-400">☀️ {plant.sunlight}</span>}
                     {plant.watering && <span className="text-xs text-gray-400">💧 {plant.watering}</span>}
                     {plant.care_level && <span className="text-xs text-gray-400">🌱 {plant.care_level}</span>}
+                    {plant.growth_rate && <span className="text-xs text-gray-400">⚡ {plant.growth_rate}</span>}
+                </div>
+
+                <div className="pt-2 border-t border-gray-700 flex gap-2 flex-wrap text-[10px] text-gray-500 font-mono">
+                    {plant.type && <span>TYPE: {plant.type}</span>}
+                    {(plant.edible_fruit || plant.edible_leaf) && <span className="text-green-500">EDIBLE</span>}
+                    {plant.flowers && <span className="text-pink-400">BLOOMS</span>}
                 </div>
             </div>
         </div>

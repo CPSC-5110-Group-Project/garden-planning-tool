@@ -6,6 +6,11 @@ export interface Plant {
     sunlight?: string | null;
     care_level?: string | null;
     image_url?: string | null;
+    growth_rate?: string | null;
+    type?: string | null;
+    edible_fruit?: boolean | null;
+    edible_leaf?: boolean | null;
+    flowers?: boolean | null;
 }
 
 export interface Plot {
@@ -13,6 +18,7 @@ export interface Plot {
     isPlantable: boolean;
     plantId?: number;
     plant?: Plant;
+    plantedAt?: string | null;
 }
 
 export interface Garden {

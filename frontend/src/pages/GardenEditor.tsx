@@ -14,6 +14,7 @@ import PlantTooltip from '../components/PlantTooltip';
 
 export default function GardenEditor() {
     const { gardens, addGarden, handleMove, handleResize, addPlant } = useGardenData();
+    const [timelineDays, setTimelineDays] = useState<number>(0);
     const [activeDragPlot, setActiveDragPlot] = useState<{
         gardenId: string;
         plotKey: string;
@@ -101,6 +102,20 @@ export default function GardenEditor() {
                 header={
                     <div className="flex justify-between items-center w-full px-2">
                         <h1 className="text-xl font-bold text-text-header m-0">Garden Planning Tool</h1>
+
+                        <div className="flex items-center gap-4 bg-gray-800 px-4 py-1.5 rounded-lg border border-gray-700">
+                            <span className="text-xs text-gray-300 font-medium whitespace-nowrap">
+                                Preview: {timelineDays === 0 ? 'Today' : `+${timelineDays} Days`}
+                            </span>
+                            <input
+                                type="range"
+                                min="0"
+                                max="180"
+                                value={timelineDays}
+                                onChange={(e) => setTimelineDays(Number(e.target.value))}
+                                className="w-48 accent-green-500 cursor-pointer h-1 bg-gray-600 rounded-lg appearance-none"
+                            />
+                        </div>
                     </div>
                 }
                 sidebar={
@@ -132,6 +147,7 @@ export default function GardenEditor() {
                                                         activeDragPlot?.gardenId === garden.id &&
                                                         activeDragPlot?.plotKey === plotKey
                                                     }
+                                                    timelineDays={timelineDays}
                                                     onPlantMouseOver={handlePlantMouseOver}
                                                     onPlantMouseOut={handlePlantMouseOut}
                                                 />
