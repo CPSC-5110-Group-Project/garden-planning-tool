@@ -21,7 +21,7 @@ _SUMMARY_COLS = (
     Plant.flowers,
 )
 
-_SUNLIGHT_FILTER_OPTIONS = ("full sun", "part shade", "shade")
+_SUNLIGHT_FILTER_OPTIONS = ("Full sun", "Part shade", "Filtered shade", "Shade")
 
 
 @dataclass

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useQuery } from '@tanstack/react-query';
 import PlantCard from './PlantCard';
 import { type Plant } from '../types/garden';
@@ -6,10 +7,25 @@ import {
     fetchFilterOptions,
     fetchPlants,
     searchPlants,
+    type PlantFilterOptions,
     type PlantFilters,
 } from '../lib/api';
 
 const EMPTY_FILTERS: PlantFilters = {};
+const POPOVER_GAP_PX = 8;
+const POPOVER_MAX_WIDTH = 384;
+
+function getPopoverPosition(trigger: HTMLElement) {
+    const rect = trigger.getBoundingClientRect();
+    const width = Math.min(POPOVER_MAX_WIDTH, window.innerWidth - 48);
+
+    return {
+        top: rect.bottom + POPOVER_GAP_PX,
+        left: rect.left,
+        width,
+        maxHeight: Math.min(window.innerHeight * 0.7, 512),
+    };
+}
 
 const BOOL_FILTER_OPTIONS = [
     { key: 'edible_fruit' as const, label: 'Edible fruit' },
@@ -17,9 +33,167 @@ const BOOL_FILTER_OPTIONS = [
     { key: 'flowers' as const, label: 'Flowers' },
 ];
 
+function filtersEqual(a: PlantFilters, b: PlantFilters) {
+    return (
+        a.type === b.type &&
+        a.watering === b.watering &&
+        a.sunlight === b.sunlight &&
+        a.care_level === b.care_level &&
+        a.growth_rate === b.growth_rate &&
+        a.cycle === b.cycle &&
+        a.edible_fruit === b.edible_fruit &&
+        a.edible_leaf === b.edible_leaf &&
+        a.flowers === b.flowers
+    );
+}
+
+function applyPopoverStyles(element: HTMLDivElement, position: ReturnType<typeof getPopoverPosition>) {
+    element.style.top = `${position.top}px`;
+    element.style.left = `${position.left}px`;
+    element.style.width = `${position.width}px`;
+
+    const form = element.querySelector('form');
+    if (form instanceof HTMLElement) {
+        form.style.maxHeight = `${position.maxHeight}px`;
+    }
+}
+
 function activeFilters(filters: PlantFilters): PlantFilters | undefined {
     const entries = Object.entries(filters).filter(([, value]) => value !== undefined && value !== '');
     return entries.length ? Object.fromEntries(entries) : undefined;
+}
+
+function FilterFields({
+    filters,
+    filterOptions,
+    selectClassName,
+    onUpdateFilter,
+    onToggleBoolFilter,
+}: {
+    filters: PlantFilters;
+    filterOptions: PlantFilterOptions;
+    selectClassName: string;
+    onUpdateFilter: <K extends keyof PlantFilters>(key: K, value: PlantFilters[K]) => void;
+    onToggleBoolFilter: (key: 'edible_fruit' | 'edible_leaf' | 'flowers') => void;
+}) {
+    return (
+        <>
+            <div className="grid grid-cols-1 @[300px]:grid-cols-2 gap-2">
+                <label className="flex flex-col gap-1">
+                    <span className="text-[10px] uppercase tracking-wider text-text-main/60 font-mono">Type</span>
+                    <select
+                        value={filters.type ?? ''}
+                        onChange={(e) => onUpdateFilter('type', e.target.value || undefined)}
+                        className={selectClassName}
+                    >
+                        <option value="">Any</option>
+                        {filterOptions.type.map((option) => (
+                            <option key={option} value={option}>
+                                {option}
+                            </option>
+                        ))}
+                    </select>
+                </label>
+
+                <label className="flex flex-col gap-1">
+                    <span className="text-[10px] uppercase tracking-wider text-text-main/60 font-mono">Watering</span>
+                    <select
+                        value={filters.watering ?? ''}
+                        onChange={(e) => onUpdateFilter('watering', e.target.value || undefined)}
+                        className={selectClassName}
+                    >
+                        <option value="">Any</option>
+                        {filterOptions.watering.map((option) => (
+                            <option key={option} value={option}>
+                                {option}
+                            </option>
+                        ))}
+                    </select>
+                </label>
+
+                <label className="flex flex-col gap-1">
+                    <span className="text-[10px] uppercase tracking-wider text-text-main/60 font-mono">Sunlight</span>
+                    <select
+                        value={filters.sunlight ?? ''}
+                        onChange={(e) => onUpdateFilter('sunlight', e.target.value || undefined)}
+                        className={selectClassName}
+                    >
+                        <option value="">Any</option>
+                        {filterOptions.sunlight.map((option) => (
+                            <option key={option} value={option}>
+                                {option}
+                            </option>
+                        ))}
+                    </select>
+                </label>
+
+                <label className="flex flex-col gap-1">
+                    <span className="text-[10px] uppercase tracking-wider text-text-main/60 font-mono">Care level</span>
+                    <select
+                        value={filters.care_level ?? ''}
+                        onChange={(e) => onUpdateFilter('care_level', e.target.value || undefined)}
+                        className={selectClassName}
+                    >
+                        <option value="">Any</option>
+                        {filterOptions.care_level.map((option) => (
+                            <option key={option} value={option}>
+                                {option}
+                            </option>
+                        ))}
+                    </select>
+                </label>
+
+                <label className="flex flex-col gap-1">
+                    <span className="text-[10px] uppercase tracking-wider text-text-main/60 font-mono">Growth rate</span>
+                    <select
+                        value={filters.growth_rate ?? ''}
+                        onChange={(e) => onUpdateFilter('growth_rate', e.target.value || undefined)}
+                        className={selectClassName}
+                    >
+                        <option value="">Any</option>
+                        {filterOptions.growth_rate.map((option) => (
+                            <option key={option} value={option}>
+                                {option}
+                            </option>
+                        ))}
+                    </select>
+                </label>
+
+                <label className="flex flex-col gap-1">
+                    <span className="text-[10px] uppercase tracking-wider text-text-main/60 font-mono">Cycle</span>
+                    <select
+                        value={filters.cycle ?? ''}
+                        onChange={(e) => onUpdateFilter('cycle', e.target.value || undefined)}
+                        className={selectClassName}
+                    >
+                        <option value="">Any</option>
+                        {filterOptions.cycle.map((option) => (
+                            <option key={option} value={option}>
+                                {option}
+                            </option>
+                        ))}
+                    </select>
+                </label>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+                {BOOL_FILTER_OPTIONS.map(({ key, label }) => (
+                    <button
+                        key={key}
+                        type="button"
+                        onClick={() => onToggleBoolFilter(key)}
+                        className={`text-[11px] px-2.5 py-1 rounded-md border transition-colors cursor-pointer ${
+                            filters[key]
+                                ? 'border-leaf-green text-leaf-green bg-code-bg'
+                                : 'border-border-main/40 text-text-main/70 hover:border-leaf-green/60'
+                        }`}
+                    >
+                        {label}
+                    </button>
+                ))}
+            </div>
+        </>
+    );
 }
 
 export default function PlantLibrary() {
@@ -30,6 +204,16 @@ export default function PlantLibrary() {
     const [showFilters, setShowFilters] = useState(false);
     const [page, setPage] = useState(1);
     const [pageInput, setPageInput] = useState('1');
+    const [popoverPosition, setPopoverPosition] = useState<{
+        top: number;
+        left: number;
+        width: number;
+        maxHeight: number;
+    } | null>(null);
+    const triggerRef = useRef<HTMLButtonElement>(null);
+    const popoverRef = useRef<HTMLDivElement>(null);
+    const submittedFiltersRef = useRef(submittedFilters);
+    submittedFiltersRef.current = submittedFilters;
 
     const appliedFilters = activeFilters(submittedFilters);
 
@@ -54,9 +238,26 @@ export default function PlantLibrary() {
         setPageInput(String(newPage));
     };
 
+    const closeFilters = useCallback(() => {
+        setShowFilters(false);
+        setFilters(submittedFiltersRef.current);
+    }, []);
+
+    const toggleFilters = () => {
+        setShowFilters((open) => {
+            if (open) {
+                setFilters(submittedFilters);
+                return false;
+            }
+            setFilters(submittedFilters);
+            return true;
+        });
+    };
+
     const applyFilters = () => {
         setSubmittedFilters(filters);
         goToPage(1);
+        setShowFilters(false);
     };
 
     const clearFilters = () => {
@@ -64,6 +265,66 @@ export default function PlantLibrary() {
         setSubmittedFilters(EMPTY_FILTERS);
         goToPage(1);
     };
+
+    const hasActiveFilters = Boolean(appliedFilters);
+    const hasPendingFilters = !filtersEqual(filters, submittedFilters);
+    const canApplyFilters = hasPendingFilters || hasActiveFilters;
+
+    const handleFilterSubmit = (event: React.FormEvent) => {
+        event.preventDefault();
+        if (canApplyFilters) {
+            applyFilters();
+        }
+    };
+
+    useLayoutEffect(() => {
+        if (!showFilters) {
+            setPopoverPosition(null);
+            return;
+        }
+
+        const placePopover = () => {
+            if (!triggerRef.current) return;
+
+            const position = getPopoverPosition(triggerRef.current);
+            setPopoverPosition(position);
+
+            if (popoverRef.current) {
+                applyPopoverStyles(popoverRef.current, position);
+            }
+        };
+
+        placePopover();
+        const rafId = requestAnimationFrame(placePopover);
+
+        return () => cancelAnimationFrame(rafId);
+    }, [showFilters]);
+
+    useEffect(() => {
+        if (!showFilters) return;
+
+        const handlePointerDown = (event: MouseEvent) => {
+            const target = event.target as Node;
+            if (popoverRef.current?.contains(target) || triggerRef.current?.contains(target)) {
+                return;
+            }
+            closeFilters();
+        };
+
+        const handleEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                closeFilters();
+            }
+        };
+
+        document.addEventListener('mousedown', handlePointerDown);
+        document.addEventListener('keydown', handleEscape);
+
+        return () => {
+            document.removeEventListener('mousedown', handlePointerDown);
+            document.removeEventListener('keydown', handleEscape);
+        };
+    }, [showFilters, closeFilters]);
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearch(e.target.value);
@@ -86,9 +347,6 @@ export default function PlantLibrary() {
             [key]: prev[key] === true ? undefined : true,
         }));
     };
-
-    const hasActiveFilters = Boolean(appliedFilters);
-    const hasPendingFilters = JSON.stringify(filters) !== JSON.stringify(submittedFilters);
 
     const selectClassName =
         'w-full bg-code-bg border border-border-main rounded-lg px-2 py-1.5 text-xs text-text-header focus:outline-none focus:border-leaf-green transition-colors';
@@ -120,7 +378,11 @@ export default function PlantLibrary() {
 
             <div className="flex items-center justify-between gap-2">
                 <button
-                    onClick={() => setShowFilters((open) => !open)}
+                    ref={triggerRef}
+                    type="button"
+                    aria-expanded={showFilters}
+                    aria-haspopup="dialog"
+                    onClick={toggleFilters}
                     className={`text-xs font-semibold px-2.5 py-1.5 rounded-lg border transition-colors cursor-pointer ${
                         showFilters || hasActiveFilters
                             ? 'border-leaf-green text-leaf-green bg-code-bg/60'
@@ -129,8 +391,87 @@ export default function PlantLibrary() {
                 >
                     Filters{hasActiveFilters ? ' •' : ''}
                 </button>
-                {hasActiveFilters && (
+
+                {showFilters &&
+                    filterOptions &&
+                    createPortal(
+                        <div
+                            ref={popoverRef}
+                            role="dialog"
+                            aria-label="Filter plants"
+                            style={{
+                                position: 'fixed',
+                                top: popoverPosition?.top ?? 0,
+                                left: popoverPosition?.left ?? 0,
+                                width: popoverPosition?.width ?? POPOVER_MAX_WIDTH,
+                                visibility: popoverPosition ? 'visible' : 'hidden',
+                                zIndex: 100,
+                            }}
+                            className="@container font-sans"
+                        >
+                            <form
+                                onSubmit={handleFilterSubmit}
+                                onKeyDown={(event) => {
+                                    if (event.key !== 'Enter' || !canApplyFilters) return;
+                                    const target = event.target as HTMLElement;
+                                    if (
+                                        target.tagName === 'BUTTON' &&
+                                        (target as HTMLButtonElement).type === 'button'
+                                    ) {
+                                        return;
+                                    }
+                                    event.preventDefault();
+                                    applyFilters();
+                                }}
+                                style={{ maxHeight: popoverPosition?.maxHeight ?? 512 }}
+                                className="bg-bg-main border border-border-main rounded-xl shadow-lg shadow-black/20 p-3 flex flex-col gap-3 overflow-y-auto"
+                            >
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="text-xs font-semibold text-text-header">Filter plants</span>
+                                    <button
+                                        type="button"
+                                        onClick={closeFilters}
+                                        className="text-text-main/60 hover:text-text-header transition-colors cursor-pointer text-sm leading-none"
+                                        aria-label="Close filters"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+
+                                <FilterFields
+                                    filters={filters}
+                                    filterOptions={filterOptions}
+                                    selectClassName={selectClassName}
+                                    onUpdateFilter={updateFilter}
+                                    onToggleBoolFilter={toggleBoolFilter}
+                                />
+
+                                <div className="flex items-center gap-2 pt-1 border-t border-border-main/40">
+                                    <button
+                                        type="submit"
+                                        disabled={!canApplyFilters}
+                                        className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-leaf-green/20 text-leaf-green border border-leaf-green/40 hover:bg-leaf-green/30 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                        Apply filters
+                                    </button>
+                                    {(hasActiveFilters || activeFilters(filters)) && (
+                                        <button
+                                            type="button"
+                                            onClick={clearFilters}
+                                            className="text-xs text-text-main/60 hover:text-accent transition-colors cursor-pointer"
+                                        >
+                                            Clear all
+                                        </button>
+                                    )}
+                                </div>
+                            </form>
+                        </div>,
+                        document.body,
+                    )}
+
+                {hasActiveFilters && !showFilters && (
                     <button
+                        type="button"
                         onClick={clearFilters}
                         className="text-xs text-text-main/60 hover:text-accent transition-colors cursor-pointer"
                     >
@@ -138,133 +479,6 @@ export default function PlantLibrary() {
                     </button>
                 )}
             </div>
-
-            {showFilters && filterOptions && (
-                <div className="bg-code-bg/30 border border-border-main rounded-xl p-3 flex flex-col gap-3">
-                    <div className="grid grid-cols-1 @[400px]:grid-cols-2 gap-2">
-                        <label className="flex flex-col gap-1">
-                            <span className="text-[10px] uppercase tracking-wider text-text-main/60 font-mono">Type</span>
-                            <select
-                                value={filters.type ?? ''}
-                                onChange={(e) => updateFilter('type', e.target.value || undefined)}
-                                className={selectClassName}
-                            >
-                                <option value="">Any</option>
-                                {filterOptions.type.map((option) => (
-                                    <option key={option} value={option}>
-                                        {option}
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
-
-                        <label className="flex flex-col gap-1">
-                            <span className="text-[10px] uppercase tracking-wider text-text-main/60 font-mono">Watering</span>
-                            <select
-                                value={filters.watering ?? ''}
-                                onChange={(e) => updateFilter('watering', e.target.value || undefined)}
-                                className={selectClassName}
-                            >
-                                <option value="">Any</option>
-                                {filterOptions.watering.map((option) => (
-                                    <option key={option} value={option}>
-                                        {option}
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
-
-                        <label className="flex flex-col gap-1">
-                            <span className="text-[10px] uppercase tracking-wider text-text-main/60 font-mono">Sunlight</span>
-                            <select
-                                value={filters.sunlight ?? ''}
-                                onChange={(e) => updateFilter('sunlight', e.target.value || undefined)}
-                                className={selectClassName}
-                            >
-                                <option value="">Any</option>
-                                {filterOptions.sunlight.map((option) => (
-                                    <option key={option} value={option}>
-                                        {option}
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
-
-                        <label className="flex flex-col gap-1">
-                            <span className="text-[10px] uppercase tracking-wider text-text-main/60 font-mono">Care level</span>
-                            <select
-                                value={filters.care_level ?? ''}
-                                onChange={(e) => updateFilter('care_level', e.target.value || undefined)}
-                                className={selectClassName}
-                            >
-                                <option value="">Any</option>
-                                {filterOptions.care_level.map((option) => (
-                                    <option key={option} value={option}>
-                                        {option}
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
-
-                        <label className="flex flex-col gap-1">
-                            <span className="text-[10px] uppercase tracking-wider text-text-main/60 font-mono">Growth rate</span>
-                            <select
-                                value={filters.growth_rate ?? ''}
-                                onChange={(e) => updateFilter('growth_rate', e.target.value || undefined)}
-                                className={selectClassName}
-                            >
-                                <option value="">Any</option>
-                                {filterOptions.growth_rate.map((option) => (
-                                    <option key={option} value={option}>
-                                        {option}
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
-
-                        <label className="flex flex-col gap-1">
-                            <span className="text-[10px] uppercase tracking-wider text-text-main/60 font-mono">Cycle</span>
-                            <select
-                                value={filters.cycle ?? ''}
-                                onChange={(e) => updateFilter('cycle', e.target.value || undefined)}
-                                className={selectClassName}
-                            >
-                                <option value="">Any</option>
-                                {filterOptions.cycle.map((option) => (
-                                    <option key={option} value={option}>
-                                        {option}
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                        {BOOL_FILTER_OPTIONS.map(({ key, label }) => (
-                            <button
-                                key={key}
-                                type="button"
-                                onClick={() => toggleBoolFilter(key)}
-                                className={`text-[11px] px-2.5 py-1 rounded-md border transition-colors cursor-pointer ${
-                                    filters[key]
-                                        ? 'border-leaf-green text-leaf-green bg-code-bg'
-                                        : 'border-border-main/40 text-text-main/70 hover:border-leaf-green/60'
-                                }`}
-                            >
-                                {label}
-                            </button>
-                        ))}
-                    </div>
-
-                    <button
-                        onClick={applyFilters}
-                        disabled={!hasPendingFilters && !hasActiveFilters}
-                        className="self-start text-xs font-semibold px-3 py-1.5 rounded-lg bg-leaf-green/20 text-leaf-green border border-leaf-green/40 hover:bg-leaf-green/30 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                        Apply filters
-                    </button>
-                </div>
-            )}
 
             <div className="grid grid-cols-1 @[300px]:grid-cols-2 gap-3">
                 {isLoading && (
