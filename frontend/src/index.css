@@ -1,30 +1,83 @@
 @import "tailwindcss";
 
 @theme {
-  --color-text-main: #6b6375;
-  --color-text-header: #08060d;
-  --color-bg-main: #fff;
-  --color-border-main: #e5e4e7;
-  --color-code-bg: #f4f3ec;
-  --color-accent: #aa3bff;
-  
-  --font-sans: system-ui, "Segoe UI", Roboto, sans-serif;
+  /* --- Raw Color Palettes --- */
+  --color-olive-leaf-50: #f4f6ee;
+  --color-olive-leaf-100: #eaeedd;
+  --color-olive-leaf-200: #d5dcbc;
+  --color-olive-leaf-300: #c0cb9a;
+  --color-olive-leaf-400: #aaba78;
+  --color-olive-leaf-500: #95a857;
+  --color-olive-leaf-600: #778745;
+  --color-olive-leaf-700: #5a6534;
+  --color-olive-leaf-800: #3c4323;
+  --color-olive-leaf-900: #1e2211;
+  --color-olive-leaf-950: #15180c;
+
+  --color-black-forest-50: #f3f7ed;
+  --color-black-forest-100: #e6efdc;
+  --color-black-forest-200: #cddfb9;
+  --color-black-forest-300: #b4d095;
+  --color-black-forest-400: #9cc072;
+  --color-black-forest-500: #83b04f;
+  --color-black-forest-600: #698d3f;
+  --color-black-forest-700: #4e6a2f;
+  --color-black-forest-800: #344620;
+  --color-black-forest-900: #1a2310;
+  --color-black-forest-950: #12190b;
+
+  --color-cornsilk-50: #fefbe6;
+  --color-cornsilk-100: #fdf7ce;
+  --color-cornsilk-200: #fcef9c;
+  --color-cornsilk-300: #fae76b;
+  --color-cornsilk-400: #f9df39;
+  --color-cornsilk-500: #f7d708;
+  --color-cornsilk-600: #c6ac06;
+  --color-cornsilk-700: #948105;
+  --color-cornsilk-800: #635603;
+  --color-cornsilk-900: #312b02;
+  --color-cornsilk-950: #231e01;
+
+  --color-sunlit-clay-50: #fbf3ea;
+  --color-sunlit-clay-100: #f6e7d5;
+  --color-sunlit-clay-200: #edceab;
+  --color-sunlit-clay-300: #e4b681;
+  --color-sunlit-clay-400: #db9d57;
+  --color-sunlit-clay-500: #d2852d;
+  --color-sunlit-clay-600: #a86a24;
+  --color-sunlit-clay-700: #7e501b;
+  --color-sunlit-clay-800: #543512;
+  --color-sunlit-clay-900: #2a1b09;
+  --color-sunlit-clay-950: #1d1306;
+
+  --color-copperwood-50: #fbf2ea;
+  --color-copperwood-100: #f7e4d4;
+  --color-copperwood-200: #eecaaa;
+  --color-copperwood-300: #e6af7f;
+  --color-copperwood-400: #dd9455;
+  --color-copperwood-500: #d57a2a;
+  --color-copperwood-600: #aa6122;
+  --color-copperwood-700: #804919;
+  --color-copperwood-800: #553111;
+  --color-copperwood-900: #2b1808;
+  --color-copperwood-950: #1e1106;
+
+  /* --- Balanced Semantic Theme Mapping --- */
+  --color-text-main: var(--color-black-forest-900);
+  --color-text-header: var(--color-black-forest-950);
+  --color-bg-main: var(--color-olive-leaf-100);
+  --color-border-main: var(--color-olive-leaf-300);
+  --color-code-bg: var(--color-olive-leaf-200);
+  --color-accent: var(--color-copperwood-700);
+  --color-leaf-green: var(--color-black-forest-700);
+
+  /* --- Typography --- */
+  --font-sans: "Georgia", Cambria, "Times New Roman", Times, serif;
   --font-mono: ui-monospace, Consolas, monospace;
 }
 
 :root {
-  color-scheme: light dark;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-text-main: #9ca3af;
-    --color-text-header: #f3f4f6;
-    --color-bg-main: #16171d;
-    --color-border-main: #2e303a;
-    --color-code-bg: #1f2028;
-    --color-accent: #16a34a;
-  }
+  color-scheme: light;
 }
 
 @layer base {
@@ -32,17 +85,19 @@
     @apply m-0 bg-bg-main text-text-main font-sans antialiased;
     font-size: 18px;
     letter-spacing: 0.18px;
+    background-image: radial-gradient(var(--color-olive-leaf-300) 1px, transparent 1px);
+    background-size: 24px 24px;
   }
 
   h1 {
-    @apply font-medium text-text-header mt-8 mb-8 text-[36px] lg:text-[56px] tracking-[-1.68px];
+    @apply font-medium text-text-header mt-8 mb-8 text-[36px] lg:text-[56px] tracking-[-1px];
   }
 
   h2 {
-    @apply font-medium text-text-header mb-2 text-[20px] lg:text-[24px] leading-[118%] tracking-[-0.24px];
+    @apply font-medium text-text-header mb-2 text-[20px] lg:text-[24px] leading-[118%];
   }
 
   code {
-    @apply font-mono inline-flex rounded bg-code-bg text-text-header px-2 py-1 text-[15px] leading-[135%];
+    @apply font-mono inline-flex rounded bg-code-bg text-accent px-2 py-1 text-[15px] leading-[135%] border border-border-main/40;
   }
 }

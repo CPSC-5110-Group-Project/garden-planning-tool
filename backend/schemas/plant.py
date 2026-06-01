@@ -5,7 +5,6 @@ from fastapi import Query
 
 T = TypeVar("T")
 
-# Reusable query param types
 PageParam = Annotated[int, Query(ge=1, description="Page number")]
 LimitParam = Annotated[int, Query(ge=1, le=100, description="Results per page")]
 
@@ -18,6 +17,11 @@ class PlantSummary(BaseModel):
     sunlight: Optional[str] = None
     care_level: Optional[str] = None
     image_url: Optional[str] = None
+    growth_rate: Optional[str] = None
+    type: Optional[str] = None
+    edible_fruit: Optional[bool] = None
+    edible_leaf: Optional[bool] = None
+    flowers: Optional[bool] = None
 
     class Config:
         from_attributes = True

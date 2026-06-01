@@ -71,7 +71,7 @@ const Canvas = forwardRef<Konva.Stage, CanvasProps>(({ children, onAddGarden, on
     return (
         <div
             ref={containerRef}
-            className="w-full h-full bg-main overflow-hidden relative"
+            className="w-full h-full bg-bg-main overflow-hidden relative"
             onDragOver={onDragOver}
             onDrop={onDrop}
         >
@@ -104,7 +104,7 @@ const Canvas = forwardRef<Konva.Stage, CanvasProps>(({ children, onAddGarden, on
 
             {menu.visible && (
                 <div
-                    className="absolute z-50 bg-gray-800 border border-gray-600 shadow-2xl rounded-md py-1 w-40 overflow-hidden"
+                    className="absolute z-50 bg-code-bg border border-border-main shadow-xl rounded-xl py-1 w-44 overflow-hidden"
                     style={{
                         left: menu.x * view.scale + view.x,
                         top: menu.y * view.scale + view.y,
@@ -115,9 +115,9 @@ const Canvas = forwardRef<Konva.Stage, CanvasProps>(({ children, onAddGarden, on
                             onAddGarden(menu.x, menu.y);
                             setMenu((prev) => ({ ...prev, visible: false }));
                         }}
-                        className="w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-green-600 hover:text-white transition-colors"
+                        className="w-full text-left px-4 py-2.5 text-sm font-sans font-medium text-text-header hover:bg-leaf-green hover:text-olive-leaf-50 transition-colors cursor-pointer"
                     >
-                        + Add Garden
+                        🌱 Add Garden
                     </button>
                 </div>
             )}

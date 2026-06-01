@@ -6,16 +6,11 @@ export interface Plant {
     sunlight?: string | null;
     care_level?: string | null;
     image_url?: string | null;
-    cycle?: string | null;
-    maintenance?: string | null;
-    poisonous_to_humans?: boolean | null;
-    poisonous_to_pets?: boolean | null;
+    growth_rate?: string | null;
+    type?: string | null;
     edible_fruit?: boolean | null;
     edible_leaf?: boolean | null;
-    medicinal?: boolean | null;
     flowers?: boolean | null;
-    attracts?: string | null;
-    description?: string | null;
 }
 
 export interface Plot {
@@ -23,6 +18,9 @@ export interface Plot {
     isPlantable: boolean;
     plantId?: number;
     plant?: Plant;
+    plantedAt?: string | null;
+    isTreeChild?: boolean;
+    anchorKey?: string;
 }
 
 export interface Garden {

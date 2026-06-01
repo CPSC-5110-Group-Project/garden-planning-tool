@@ -23,7 +23,6 @@ export default function PlantTooltip({ data, delay = 400 }: TooltipProps) {
             timer = setTimeout(() => setShouldShow(true), delay);
         } else {
             timer = setTimeout(() => setShouldShow(false), 0);
-
             cleanupTimer = setTimeout(() => setActiveData(null), 300);
         }
 
@@ -37,8 +36,8 @@ export default function PlantTooltip({ data, delay = 400 }: TooltipProps) {
 
     return (
         <div
-            className={`absolute z-50 pointer-events-none bg-gray-900 border border-gray-600 rounded-lg shadow-xl w-64 transition-all duration-300 ease-in-out ${
-                shouldShow ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+            className={`absolute z-50 pointer-events-none bg-bg-main border border-border-main rounded-xl shadow-xl w-64 transition-all duration-300 ease-out p-1 ${
+                shouldShow ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-1'
             }`}
             style={{
                 left: (activeData?.x ?? 0) + 15,
