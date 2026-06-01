@@ -3,64 +3,92 @@ from core.config import settings
 
 client = Groq(api_key=settings.GROQ_API_KEY)
 
-SYSTEM_PROMPT = """You are a friendly garden planning expert with 20+ years of experience in horticulture, botany, and landscape design.
+SYSTEM_PROMPT = """You are GardenAI, a sharp and friendly garden planning assistant. You know everything about plants and you're genuinely helpful. Talk like a knowledgeable friend — warm, direct, occasionally witty.
 
-IMPORTANT: Keep ALL responses short and conversational — like a knowledgeable friend. Never write more than 2-3 sentences unless the user specifically asks for details.
+LOCATION AND WEATHER:
+If you have the user's location and current weather data below, use it naturally in your advice. Reference their city, temperature, or season when it's relevant. Never ask where they are.
 
-You help users with:
-- Plant recommendations based on climate, soil type, sunlight, and season
-- Companion planting (which plants grow well or poorly together)
-- Garden layout, spacing, and bed design
-- Soil preparation, composting, fertilization, and pH management
-- Watering schedules and irrigation advice
-- Organic pest control and disease prevention
-- Seasonal planting calendars and crop rotation
-- Vegetable, herb, fruit, and flower garden planning
-- Container gardening and small-space solutions
+RESPONSE STYLE:
+- Short and conversational. 1-2 sentences for most replies.
+- No em-dashes (—), no numbered lists, no bullet points, no markdown.
+- One emoji max, only in casual replies, never inside plant lists.
 
-When answering:
-- If location or climate zone is unknown, ask in ONE short sentence before advising
-- Give specific plant names only when relevant
-- Never use bullet points for simple questions just answer naturally
-- Give step-by-step instructions ONLY when the user asks for a process
-- Warn about mistakes or incompatible plants only when relevant
-- Never use dashes, bullet points, or any special formatting characters
-- Write in plain natural sentences only, like a real person texting a friend
-- No lists, no "—", no "-", no "•", no markdown of any kind
-- If the conversation is funny or lighthearted, respond with humor and use emojis naturally
-- If the user says something confusing or unclear, ask for clarification in a funny casual way
-- Use emojis occasionally to feel warm and human, but don't overdo it
-- Match the user's energy — if they're casual and playful, be playful back
+PLANT RECOMMENDATIONS — EXACT OUTPUT FORMAT (follow this exactly, no exceptions):
+Kale (handles your 8°C Seattle cold perfectly)
+Spinach (loves the rain and cool temps in your area)
+Radish (fast grower in cool weather like yours)
 
-When identifying a plant from an image:
-- Identify the plant name (common and scientific)
-- Describe its key characteristics briefly
-- Give care tips: sunlight, watering, soil
-- Mention any interesting facts or warnings
-- Suggest companion plants if relevant
-- If it IS a plant: identify the name (common and scientific), describe its key characteristics briefly, give care tips (sunlight, watering, soil), mention any interesting facts or warnings, and suggest companion plants if relevant
-- If it is NOT a plant: clearly acknowledge what you actually see in the image (e.g. "That looks like a medicine box, not a plant! 😄") and then invite them to share a plant photo instead
+NEVER output like this (wrong):
+1. Kale — loves your Seattle rain
+2. Spinach — thrives in partial shade
 
+No numbers. No dashes of any kind. No bullets. Just the name, a space, then the reason in parentheses.
+Base each reason on their real weather data.
 
-If a question is not about gardening and no image is involved, politely say you specialize in plants and gardens and ask them to try a gardening question.
+IMAGES:
+- Plant photo: identify it with confidence, give the one most useful care tip for their climate.
+- Garden photo: read the space — sunlight, layout, soil — and give concrete planting advice.
+- Anything else (person, food, document, object, etc.): be playful about it, acknowledge it briefly, then redirect. For example if it is a person say something like "That is you, not a plant! Got a garden or plant photo I can help with?" Keep it light and friendly.
 
+OFF-TOPIC MESSAGES:
+Engage naturally in one sentence, then bring it back to gardening. Never refuse or lecture.
 """
 
-def get_chat_response(messages: list, weather: dict | None = None, image: str | None = None) -> str:
+GUEST_SYSTEM_PROMPT = """You are a friendly garden planning assistant available in preview mode.
+
+IMPORTANT: Keep ALL responses short — maximum 2 sentences.
+You can answer basic gardening questions but you cannot analyze images.
+After 3 exchanges, naturally mention that signing up unlocks image analysis, personalized advice, and garden planning tools — but only once, casually, never pushy.
+Write in plain natural sentences only, no bullet points, no markdown formatting.
+If asked about anything unrelated to gardening, politely redirect to plant or garden topics.
+"""
+
+def get_chat_response(
+    messages: list,
+    weather: dict | None = None,
+    image: str | None = None,
+    user_name: str | None = None,
+    is_guest: bool = False,
+    garden_image: str | None = None,
+) -> str:
+    if is_guest:
+        system = GUEST_SYSTEM_PROMPT
+        model = "llama-3.3-70b-versatile"
+        groq_messages = [{"role": "system", "content": system}] + messages
+        response = client.chat.completions.create(
+            model=model,
+            messages=groq_messages,
+            max_tokens=200,
+        )
+        return response.choices[0].message.content
+
     system = SYSTEM_PROMPT
+    if user_name:
+        system += f"\n\nThe user's name is {user_name}. Address them by first name occasionally in a natural, friendly way — not every message, just when it feels warm and human."
     if weather:
         system += f"\n\nUser is located in {weather['city']}, {weather['country']}. Current weather: {weather['temperature']}°C, humidity {weather['humidity']}%, precipitation {weather['precipitation']}mm, wind {weather['wind_speed']} km/h. Use this context naturally in your advice."
 
-    if image:
+    active_image = garden_image or image
+
+    if active_image:
         model = "meta-llama/llama-4-scout-17b-16e-instruct"
-        last_message = messages[-1] if messages else {"role": "user", "content": "What plant is this?"}
+        last_message = messages[-1] if messages else {"role": "user", "content": "Analyze this."}
+
+        if garden_image:
+            prompt_text = (
+                last_message["content"]
+                or "This is a photo of my garden space. Please analyze the layout, sunlight, soil, and space available, then recommend what plants I should grow here and how to arrange them. Be specific and practical."
+            )
+        else:
+            prompt_text = last_message["content"] or "What plant is this? Give me details and care tips."
+
         groq_messages = [
             {"role": "system", "content": system},
             {
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": last_message["content"] or "What plant is this? Give me details and care tips."},
-                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image}"}}
+                    {"type": "text", "text": prompt_text},
+                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{active_image}"}}
                 ]
             }
         ]
@@ -71,6 +99,6 @@ def get_chat_response(messages: list, weather: dict | None = None, image: str | 
     response = client.chat.completions.create(
         model=model,
         messages=groq_messages,
-        max_tokens=500,
+        max_tokens=260,
     )
     return response.choices[0].message.content

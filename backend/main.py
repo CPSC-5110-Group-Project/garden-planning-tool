@@ -7,8 +7,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from db import init_db, get_db_status
 from api.chat import router as chat_router
-
+from api.auth import router as auth_router
+from api.gardens import router as gardens_router
+from api.visualize import router as visualize_router
 from api import plant as plant_router
+import models  # ensures all models are registered with Base
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -28,6 +31,7 @@ app = FastAPI(lifespan=lifespan)
 
 origins = [
     "http://localhost:5173",
+    "http://localhost:5174",
 ]
 
 app.add_middleware(
@@ -39,7 +43,9 @@ app.add_middleware(
 
 )
 app.include_router(chat_router, prefix="/api")
-
+app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
+app.include_router(gardens_router, prefix="/api/gardens", tags=["gardens"])
+app.include_router(visualize_router, prefix="/api", tags=["visualize"])
 app.include_router(plant_router.router, prefix="/plants", tags=["plants"])
 
 @app.get("/")
