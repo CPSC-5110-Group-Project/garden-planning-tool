@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useQuery } from '@tanstack/react-query';
 import PlantCard from './PlantCard';
@@ -45,17 +45,6 @@ function filtersEqual(a: PlantFilters, b: PlantFilters) {
         a.edible_leaf === b.edible_leaf &&
         a.flowers === b.flowers
     );
-}
-
-function applyPopoverStyles(element: HTMLDivElement, position: ReturnType<typeof getPopoverPosition>) {
-    element.style.top = `${position.top}px`;
-    element.style.left = `${position.left}px`;
-    element.style.width = `${position.width}px`;
-
-    const form = element.querySelector('form');
-    if (form instanceof HTMLElement) {
-        form.style.maxHeight = `${position.maxHeight}px`;
-    }
 }
 
 function activeFilters(filters: PlantFilters): PlantFilters | undefined {
@@ -212,8 +201,6 @@ export default function PlantLibrary() {
     } | null>(null);
     const triggerRef = useRef<HTMLButtonElement>(null);
     const popoverRef = useRef<HTMLDivElement>(null);
-    const submittedFiltersRef = useRef(submittedFilters);
-    submittedFiltersRef.current = submittedFilters;
 
     const appliedFilters = activeFilters(submittedFilters);
 
@@ -238,20 +225,22 @@ export default function PlantLibrary() {
         setPageInput(String(newPage));
     };
 
-    const closeFilters = useCallback(() => {
+    const closeFilters = () => {
         setShowFilters(false);
-        setFilters(submittedFiltersRef.current);
-    }, []);
+        setFilters(submittedFilters);
+    };
 
     const toggleFilters = () => {
-        setShowFilters((open) => {
-            if (open) {
-                setFilters(submittedFilters);
-                return false;
-            }
-            setFilters(submittedFilters);
-            return true;
-        });
+        if (showFilters) {
+            closeFilters();
+            return;
+        }
+
+        setFilters(submittedFilters);
+        if (triggerRef.current) {
+            setPopoverPosition(getPopoverPosition(triggerRef.current));
+        }
+        setShowFilters(true);
     };
 
     const applyFilters = () => {
@@ -277,43 +266,25 @@ export default function PlantLibrary() {
         }
     };
 
-    useLayoutEffect(() => {
-        if (!showFilters) {
-            setPopoverPosition(null);
-            return;
-        }
-
-        const placePopover = () => {
-            if (!triggerRef.current) return;
-
-            const position = getPopoverPosition(triggerRef.current);
-            setPopoverPosition(position);
-
-            if (popoverRef.current) {
-                applyPopoverStyles(popoverRef.current, position);
-            }
-        };
-
-        placePopover();
-        const rafId = requestAnimationFrame(placePopover);
-
-        return () => cancelAnimationFrame(rafId);
-    }, [showFilters]);
-
     useEffect(() => {
         if (!showFilters) return;
+
+        const dismissFilters = () => {
+            setShowFilters(false);
+            setFilters(submittedFilters);
+        };
 
         const handlePointerDown = (event: MouseEvent) => {
             const target = event.target as Node;
             if (popoverRef.current?.contains(target) || triggerRef.current?.contains(target)) {
                 return;
             }
-            closeFilters();
+            dismissFilters();
         };
 
         const handleEscape = (event: KeyboardEvent) => {
             if (event.key === 'Escape') {
-                closeFilters();
+                dismissFilters();
             }
         };
 
@@ -324,7 +295,7 @@ export default function PlantLibrary() {
             document.removeEventListener('mousedown', handlePointerDown);
             document.removeEventListener('keydown', handleEscape);
         };
-    }, [showFilters, closeFilters]);
+    }, [showFilters, submittedFilters]);
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearch(e.target.value);
