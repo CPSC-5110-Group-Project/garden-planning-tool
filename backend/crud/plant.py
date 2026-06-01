@@ -11,6 +11,12 @@ _SUMMARY_COLS = (
     Plant.sunlight,
     Plant.care_level,
     Plant.image_url,
+    Plant.growth_rate,
+    Plant.type,
+    Plant.edible_fruit,
+    Plant.edible_leaf,
+    Plant.flowers,
+    
 )
 
 
