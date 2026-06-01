@@ -26,16 +26,19 @@ export default function PlantCard({ plant }: { plant: Plant }) {
     };
 
     return (
-        <div className="w-full bg-code-bg/40 border border-border-main rounded-xl overflow-hidden cursor-pointer hover:border-leaf-green transition-colors shadow-sm font-sans">
+        <div
+            draggable
+            onDragStart={handleDragStart}
+            className="w-full bg-code-bg/40 border border-border-main rounded-xl overflow-hidden cursor-grab active:cursor-grabbing hover:border-leaf-green transition-colors shadow-sm font-sans select-none"
+        >
             <div className="p-3">
                 <div className="w-2/3 aspect-square mx-auto mb-3">
                     {plant.image_url ? (
                         <img
                             src={getResizedImageUrl(plant.image_url, 200, 200)}
                             alt={plant.common_name}
-                            className="w-full h-full object-cover rounded-lg border border-border-main/40 shadow-inner"
-                            draggable
-                            onDragStart={handleDragStart}
+                            draggable={false}
+                            className="w-full h-full object-cover rounded-lg border border-border-main/40 shadow-inner pointer-events-none"
                         />
                     ) : (
                         <div className="w-full h-full bg-code-bg rounded-lg flex items-center justify-center border border-border-main/20">
