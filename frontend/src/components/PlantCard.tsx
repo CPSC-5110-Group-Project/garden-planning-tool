@@ -30,7 +30,6 @@ export default function PlantCard({ plant }: { plant: Plant }) {
     };
 
     return (
-<<<<<<< HEAD
         <>
             <div
                 onClick={() => setIsPopupOpen(true)}
@@ -89,64 +88,6 @@ export default function PlantCard({ plant }: { plant: Plant }) {
                             <span className="text-leaf-green font-semibold h-full flex items-center">BLOOMS</span>
                         )}
                     </div>
-=======
-        <div
-            draggable
-            onDragStart={handleDragStart}
-            className="w-full bg-code-bg/40 border border-border-main rounded-xl overflow-hidden cursor-grab active:cursor-grabbing hover:border-leaf-green transition-colors shadow-sm font-sans select-none"
-        >
-            <div className="p-3">
-                <div className="w-2/3 aspect-square mx-auto mb-3">
-                    {plant.image_url ? (
-                        <img
-                            src={getResizedImageUrl(plant.image_url, 200, 200)}
-                            alt={plant.common_name}
-                            draggable={false}
-                            className="w-full h-full object-cover rounded-lg border border-border-main/40 shadow-inner pointer-events-none"
-                        />
-                    ) : (
-                        <div className="w-full h-full bg-code-bg rounded-lg flex items-center justify-center border border-border-main/20">
-                            <span className="text-3xl">🌿</span>
-                        </div>
-                    )}
-                </div>
-                <div className="text-text-header font-semibold text-sm leading-tight mb-0.5">{plant.common_name}</div>
-                <div className="text-text-main/70 text-xs italic mb-2.5">{plant.scientific_name}</div>
-
-                <div className="flex gap-1.5 flex-wrap mb-3">
-                    {plant.sunlight && (
-                        <span className="text-[11px] px-2 py-0.5 bg-code-bg text-text-main rounded-md border border-border-main/30">
-                            ☀️ {plant.sunlight}
-                        </span>
-                    )}
-                    {plant.watering && (
-                        <span className="text-[11px] px-2 py-0.5 bg-code-bg text-text-main rounded-md border border-border-main/30">
-                            💧 {plant.watering}
-                        </span>
-                    )}
-                    {plant.care_level && (
-                        <span className="text-[11px] px-2 py-0.5 bg-code-bg text-text-main rounded-md border border-border-main/30">
-                            🌱 {plant.care_level}
-                        </span>
-                    )}
-                    {plant.growth_rate && (
-                        <span className="text-[11px] px-2 py-0.5 bg-code-bg text-text-main rounded-md border border-border-main/30">
-                            ⚡ {plant.growth_rate}
-                        </span>
-                    )}
-                </div>
-
-                <div className="pt-2 border-t border-border-main/60 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] uppercase tracking-wider text-text-main/70 font-mono">
-                    {plant.type && (
-                        <span className="bg-code-bg/80 px-1.5 py-0.5 rounded text-accent">{plant.type}</span>
-                    )}
-                    {(plant.edible_fruit || plant.edible_leaf) && (
-                        <span className="text-leaf-green font-semibold h-full flex items-center">EDIBLE</span>
-                    )}
-                    {plant.flowers && (
-                        <span className="text-leaf-green font-semibold h-full flex items-center">BLOOMS</span>
-                    )}
->>>>>>> f6f4a947966de92ee7d6d708b5891d5905c2b01f
                 </div>
             </div>
             {isPopupOpen && <PlantInfoPopup plant={plant} onClose={() => setIsPopupOpen(false)} />}

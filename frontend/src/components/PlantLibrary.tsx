@@ -211,10 +211,6 @@ export default function PlantLibrary() {
     });
 
     const { data, isLoading, isError } = useQuery({
-<<<<<<< HEAD
-        queryKey: submittedSearch ? ['plants', 'search', submittedSearch, page] : ['plants', 'list', page],
-        queryFn: () => (submittedSearch ? searchPlants(submittedSearch, page, 20) : fetchPlants(page, 20)),
-=======
         queryKey: submittedSearch
             ? ['plants', 'search', submittedSearch, appliedFilters, page]
             : ['plants', 'list', appliedFilters, page],
@@ -222,7 +218,6 @@ export default function PlantLibrary() {
             submittedSearch
                 ? searchPlants(submittedSearch, page, 20, appliedFilters)
                 : fetchPlants(page, 20, appliedFilters),
->>>>>>> f6f4a947966de92ee7d6d708b5891d5905c2b01f
     });
 
     const goToPage = (newPage: number) => {
@@ -465,14 +460,11 @@ export default function PlantLibrary() {
                 {isError && (
                     <div className="text-accent text-sm col-span-full font-mono pl-1">
                         Failed to load plants from the database.
-<<<<<<< HEAD
-=======
                     </div>
                 )}
                 {!isLoading && !isError && data?.data.length === 0 && (
                     <div className="text-text-main/60 text-sm col-span-full italic pl-1">
                         No plants match your search and filters.
->>>>>>> f6f4a947966de92ee7d6d708b5891d5905c2b01f
                     </div>
                 )}
                 {data?.data.map((plant: Plant) => (
@@ -480,11 +472,7 @@ export default function PlantLibrary() {
                 ))}
             </div>
 
-<<<<<<< HEAD
-            {data && (
-=======
             {data && data.meta.total_pages > 0 && (
->>>>>>> f6f4a947966de92ee7d6d708b5891d5905c2b01f
                 <div className="flex justify-between items-center text-xs text-text-main/80 font-medium mt-3 border-t border-border-main/40 pt-3">
                     <button
                         onClick={() => goToPage(page - 1)}

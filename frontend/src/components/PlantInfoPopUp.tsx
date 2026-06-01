@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { type Plant } from '../types/garden'
 
 interface Props {
@@ -19,6 +20,28 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 export default function PlantInfoPopup({ plant, onClose }: Props) {
+    const [aiDescription, setAiDescription] = useState<string | null>(null)
+    const [loadingAI, setLoadingAI] = useState(false)
+
+    useEffect(() => {
+    let cancelled = false
+    
+    setLoadingAI(true)
+    fetch(`${import.meta.env.VITE_API_URL}/plants/${plant.perenual_id}/ai-description`)
+        .then(res => res.json())
+        .then(data => {
+            if (!cancelled) setAiDescription(data.description)
+        })
+        .catch(() => {
+            if (!cancelled) setAiDescription(null)
+        })
+        .finally(() => {
+            if (!cancelled) setLoadingAI(false)
+        })
+
+    return () => { cancelled = true }
+}, [plant.perenual_id])
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={onClose}>
             <div
@@ -56,6 +79,15 @@ export default function PlantInfoPopup({ plant, onClose }: Props) {
                         </div>
                     </Section>
                 )}
+
+                <Section title="🤖 AI Garden Advice">
+                    {loadingAI
+                        ? <p className="text-sm text-text-main/50 italic">Thinking...</p>
+                        : aiDescription
+                            ? <p className="text-sm text-text-main/70 leading-relaxed">{aiDescription}</p>
+                            : <p className="text-sm text-text-main/40 italic">No advice available.</p>
+                    }
+                </Section>
             </div>
         </div>
     )

@@ -11,6 +11,8 @@ from schemas.plant import (
 )
 import crud.plant as crud_plant
 from crud.plant import PlantFilters
+from groq import Groq
+from core.config import settings
 
 router = APIRouter()
 
@@ -120,3 +122,19 @@ def get_plant(perenual_id: int = Path(ge=1), db: Session = Depends(get_db)):
     if not plant:
         raise HTTPException(status_code=404, detail="Plant not found")
     return plant
+
+@router.get("/{perenual_id}/ai-description")
+def get_ai_description(perenual_id: int = Path(ge=1), db: Session = Depends(get_db)):
+    plant = crud_plant.get_plant(db, perenual_id)
+    if not plant:
+        raise HTTPException(status_code=404, detail="Plant not found")
+    
+    client = Groq(api_key=settings.GROQ_API_KEY)
+    response = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[{
+            "role": "user",
+            "content": f"In 2-3 sentences, explain why {plant.common_name} ({plant.scientific_name}) would be a good or challenging plant for a home garden. Be practical and concise."
+        }]
+    )
+    return {"description": response.choices[0].message.content}
