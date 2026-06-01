@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { getResizedImageUrl } from '../lib/utils'
 import { type Plant } from '../types/garden'
 
 interface Props {
@@ -20,27 +21,66 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 export default function PlantInfoPopup({ plant, onClose }: Props) {
-    const [aiDescription, setAiDescription] = useState<string | null>(null)
-    const [loadingAI, setLoadingAI] = useState(false)
+    const fullImageUrl = plant.image_url ?? null
+    const thumbnailImageUrl = fullImageUrl ? getResizedImageUrl(fullImageUrl, 200, 200) : null
+    const [aiResult, setAiResult] = useState<{
+        perenualId: Plant['perenual_id'] | null
+        description: string | null
+    }>({ perenualId: null, description: null })
+    const [loadedImage, setLoadedImage] = useState<{
+        sourceUrl: string | null
+        displayUrl: string | null
+    }>({ sourceUrl: null, displayUrl: null })
+
+    const loadingAI = aiResult.perenualId !== plant.perenual_id
+    const aiDescription = loadingAI ? null : aiResult.description
+    const popupImageUrl = loadedImage.sourceUrl === fullImageUrl ? loadedImage.displayUrl : thumbnailImageUrl
 
     useEffect(() => {
-    let cancelled = false
-    
-    setLoadingAI(true)
-    fetch(`${import.meta.env.VITE_API_URL}/plants/${plant.perenual_id}/ai-description`)
-        .then(res => res.json())
-        .then(data => {
-            if (!cancelled) setAiDescription(data.description)
-        })
-        .catch(() => {
-            if (!cancelled) setAiDescription(null)
-        })
-        .finally(() => {
-            if (!cancelled) setLoadingAI(false)
-        })
+        if (!fullImageUrl) return
 
-    return () => { cancelled = true }
-}, [plant.perenual_id])
+        let cancelled = false
+        const image = new Image()
+
+        image.onload = () => {
+            if (!cancelled) {
+                setLoadedImage({
+                    sourceUrl: fullImageUrl,
+                    displayUrl: fullImageUrl,
+                })
+            }
+        }
+        image.src = fullImageUrl
+
+        return () => {
+            cancelled = true
+        }
+    }, [fullImageUrl])
+
+    useEffect(() => {
+        let cancelled = false
+
+        fetch(`${import.meta.env.VITE_API_URL}/plants/${plant.perenual_id}/ai-description`)
+            .then(res => res.json())
+            .then(data => {
+                if (!cancelled) {
+                    setAiResult({
+                        perenualId: plant.perenual_id,
+                        description: data.description,
+                    })
+                }
+            })
+            .catch(() => {
+                if (!cancelled) {
+                    setAiResult({
+                        perenualId: plant.perenual_id,
+                        description: null,
+                    })
+                }
+            })
+
+        return () => { cancelled = true }
+    }, [plant.perenual_id])
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={onClose}>
@@ -56,8 +96,8 @@ export default function PlantInfoPopup({ plant, onClose }: Props) {
                     <button onClick={onClose} className="text-text-main/50 hover:text-text-header text-xl leading-none ml-4">✕</button>
                 </div>
 
-                {plant.image_url && (
-                    <img src={plant.image_url} alt={plant.common_name} className="w-full rounded-lg mb-4 object-cover max-h-48" />
+                {popupImageUrl && (
+                    <img src={popupImageUrl} alt={plant.common_name} className="w-full rounded-lg mb-4 object-cover max-h-48" />
                 )}
 
                 <Section title="Care">
