@@ -1,6 +1,9 @@
 # Python Specific Ignores
 **/__pycache__/
 *.pyc
+.coverage
+backend/.coverage
+htmlcov/
 backend/venv/
 backend/.env
 

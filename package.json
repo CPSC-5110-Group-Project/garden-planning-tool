@@ -8,7 +8,9 @@
     "setup": "npm install && npm run venv-init && npm run install-backend && npm run install-frontend",
     "env-init": "node -e \"const fs=require('fs'); if(!fs.existsSync('backend/.env')) fs.copyFileSync('backend/.env.example', 'backend/.env'); if(!fs.existsSync('frontend/.env.local')) fs.copyFileSync('frontend/.env.example', 'frontend/.env.local');\"",
     "dev": "npm run env-init && concurrently --names \"FastAPI,Vite,TypeScript\" --prefix-colors \"yellow,green,blue\" \"cd backend && (venv/bin/python -m uvicorn main:app --reload || venv\\Scripts\\python -m uvicorn main:app --reload)\" \"cd frontend && npm run dev\" \"cd frontend && npm run typecheck -- --watch\"",
-    "typecheck": "cd frontend && npm run typecheck" 
+    "typecheck": "cd frontend && npm run typecheck",
+    "test:backend": "cd backend && venv/bin/python -m pytest --cov=api --cov=crud --cov-report=term-missing",
+    "test": "npm run test:backend"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
