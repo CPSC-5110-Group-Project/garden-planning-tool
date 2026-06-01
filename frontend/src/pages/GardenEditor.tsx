@@ -111,7 +111,11 @@ export default function GardenEditor() {
                 header={
                     <div className="flex justify-between items-center w-full px-2 font-sans">
                         <h1 className="text-lg font-semibold text-text-header m-0 tracking-tight">
+<<<<<<< HEAD
                             GrowSpace
+=======
+                            Garden Planning Tool
+>>>>>>> f6f4a947966de92ee7d6d708b5891d5905c2b01f
                         </h1>
 
                         <div className="flex items-center gap-4 bg-code-bg/60 px-4 py-2 rounded-xl border border-border-main/50 shadow-inner">

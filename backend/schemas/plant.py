@@ -8,6 +8,21 @@ T = TypeVar("T")
 PageParam = Annotated[int, Query(ge=1, description="Page number")]
 LimitParam = Annotated[int, Query(ge=1, le=100, description="Results per page")]
 
+FilterStrParam = Annotated[
+    Optional[str],
+    Query(max_length=100, strip_whitespace=True, description="Case-insensitive filter"),
+]
+FilterBoolParam = Annotated[Optional[bool], Query(description="Boolean filter")]
+
+
+class PlantFilterOptions(BaseModel):
+    type: list[str]
+    watering: list[str]
+    sunlight: list[str]
+    care_level: list[str]
+    growth_rate: list[str]
+    cycle: list[str]
+
 
 class PlantSummary(BaseModel):
     perenual_id: int
