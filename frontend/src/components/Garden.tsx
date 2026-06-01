@@ -15,6 +15,13 @@ interface GardenProps {
     children?: React.ReactNode;
 }
 
+const THEME = {
+    borderNormal: '#5a6534',
+    borderHover: '#3c4323',
+    textNormal: '#1a2310',
+    textHover: '#12190b',
+};
+
 export default function Garden({ id, name, x, y, rows, cols, handleMove, handleResize, children }: GardenProps) {
     const [isHovered, setIsHovered] = useState(false);
     const width = cols * PIXELS_PER_FOOT;
@@ -77,8 +84,8 @@ export default function Garden({ id, name, x, y, rows, cols, handleMove, handleR
                 width={width}
                 height={height}
                 fill="transparent"
-                stroke={isHovered ? '#16a34a' : '#94a3b8'}
-                strokeWidth={isHovered ? 3 : 1}
+                stroke={isHovered ? THEME.borderHover : THEME.borderNormal}
+                strokeWidth={isHovered ? 2 : 1.5}
             />
 
             {isHovered && (
@@ -133,7 +140,14 @@ export default function Garden({ id, name, x, y, rows, cols, handleMove, handleR
                 </>
             )}
 
-            <Text text={name} y={-25} fontSize={14} fontStyle="bold" fill={isHovered ? '#16a34a' : '#334155'} />
+            <Text
+                text={name}
+                y={-22}
+                fontSize={13}
+                fontFamily="Georgia, serif"
+                fontStyle="bold"
+                fill={isHovered ? THEME.textHover : THEME.textNormal}
+            />
             {children}
         </Group>
     );

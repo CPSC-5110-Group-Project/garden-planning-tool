@@ -52,18 +52,55 @@ export function useGardenData() {
             const garden = prev[gardenId];
             if (!garden) return prev;
 
+            const [rowStr, colStr] = plotKey.split('-');
+            const r = parseInt(rowStr, 10);
+            const c = parseInt(colStr, 10);
+
+            const isTree = plant.type?.toLowerCase() === 'tree';
+            const updatedPlots = { ...garden.plots };
+
+            if (isTree) {
+                const targetKeys = [`${r}-${c}`, `${r}-${c + 1}`, `${r + 1}-${c}`, `${r + 1}-${c + 1}`];
+
+                if (r + 1 >= garden.rows || c + 1 >= garden.cols) {
+                    console.warn('Not enough room for a tree edge here!');
+                    return prev;
+                }
+
+                const isAreaClear = targetKeys.every((key) => !updatedPlots[key]?.plantId);
+                if (!isAreaClear) {
+                    console.warn('Space is blocked by another plant!');
+                    return prev;
+                }
+
+                const plantedAt = new Date().toISOString();
+
+                targetKeys.forEach((key, index) => {
+                    updatedPlots[key] = {
+                        ...(updatedPlots[key] || { sunExposure: 'full', isPlantable: true }),
+                        plantId: plant.perenual_id,
+                        plant: plant,
+                        plantedAt,
+                        isTreeChild: index !== 0,
+                        anchorKey: plotKey,
+                    };
+                });
+            } else {
+                if (updatedPlots[plotKey]?.plantId) return prev;
+
+                updatedPlots[plotKey] = {
+                    ...(updatedPlots[plotKey] || { sunExposure: 'full', isPlantable: true }),
+                    plantId: plant.perenual_id,
+                    plant: plant,
+                    plantedAt: new Date().toISOString(),
+                };
+            }
+
             return {
                 ...prev,
                 [gardenId]: {
                     ...garden,
-                    plots: {
-                        ...garden.plots,
-                        [plotKey]: {
-                            ...(garden.plots[plotKey] || { sunExposure: 'full', isPlantable: true }),
-                            plantId: plant.perenual_id,
-                            plant: plant,
-                        },
-                    },
+                    plots: updatedPlots,
                 },
             };
         });
