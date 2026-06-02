@@ -12,6 +12,15 @@ def init_db():
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
         conn.commit()
     Base.metadata.create_all(bind=engine)
+    # safe migration: add session_id if chat_messages table already existed without it
+    with engine.connect() as conn:
+        try:
+            conn.execute(text(
+                "ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS session_id VARCHAR"
+            ))
+            conn.commit()
+        except Exception:
+            pass
 
 def get_db_status():
     try:

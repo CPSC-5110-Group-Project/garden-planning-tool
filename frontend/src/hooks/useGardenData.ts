@@ -1,42 +1,61 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import type { Garden, Plant } from '../types/garden';
 import { PIXELS_PER_FOOT } from '../lib/utils';
+import { loadGardensFromDB, saveGardensToDB } from '../lib/api';
+import { useAuth } from '../contexts/AuthContext';
 
 export function useGardenData() {
+    const { isGuest } = useAuth();
     const [gardens, setGardens] = useState<Record<string, Garden>>({});
+    const [loaded, setLoaded] = useState(false);
+    const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    // Load gardens from DB on login
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        if (isGuest) { setLoaded(true); return; }
+        loadGardensFromDB()
+            .then(data => {
+                const map: Record<string, Garden> = {};
+                for (const g of data) map[g.id] = g;
+                setGardens(map);
+            })
+            .catch(() => {})
+            .finally(() => setLoaded(true));
+    }, [isGuest]);
+
+    // Auto-save to DB 1.5s after any change
+    const scheduleSave = useCallback((updated: Record<string, Garden>) => {
+        if (isGuest) return;
+        if (saveTimer.current) clearTimeout(saveTimer.current);
+        saveTimer.current = setTimeout(() => {
+            saveGardensToDB(updated).catch(() => {});
+        }, 1500);
+    }, [isGuest]);
 
     const addGarden = useCallback((name: string, x: number, y: number) => {
         const id = `garden-${Date.now()}`;
-        setGardens((prev) => ({
-            ...prev,
-            [id]: {
-                id,
-                name,
-                x,
-                y,
-                rows: 5,
-                cols: 5,
-                plots: {},
-            },
-        }));
-    }, []);
+        setGardens(prev => {
+            const updated = { ...prev, [id]: { id, name, x, y, rows: 5, cols: 5, plots: {} } };
+            scheduleSave(updated);
+            return updated;
+        });
+    }, [scheduleSave]);
 
     const handleMove = useCallback((id: string, x: number, y: number) => {
-        setGardens((prev) => {
+        setGardens(prev => {
             if (!prev[id]) return prev;
-            return {
-                ...prev,
-                [id]: { ...prev[id], x, y },
-            };
+            const updated = { ...prev, [id]: { ...prev[id], x, y } };
+            scheduleSave(updated);
+            return updated;
         });
-    }, []);
+    }, [scheduleSave]);
 
     const handleResize = useCallback((id: string, newWidth: number, newHeight: number) => {
-        setGardens((prev) => {
+        setGardens(prev => {
             const garden = prev[id];
             if (!garden) return prev;
-
-            return {
+            const updated = {
                 ...prev,
                 [id]: {
                     ...garden,
@@ -44,73 +63,33 @@ export function useGardenData() {
                     rows: Math.max(1, Math.round(newHeight / PIXELS_PER_FOOT)),
                 },
             };
+            scheduleSave(updated);
+            return updated;
         });
-    }, []);
+    }, [scheduleSave]);
 
     const addPlant = useCallback((gardenId: string, plotKey: string, plant: Plant) => {
-        setGardens((prev) => {
+        setGardens(prev => {
             const garden = prev[gardenId];
             if (!garden) return prev;
-
-            const [rowStr, colStr] = plotKey.split('-');
-            const r = parseInt(rowStr, 10);
-            const c = parseInt(colStr, 10);
-
-            const isTree = plant.type?.toLowerCase() === 'tree';
-            const updatedPlots = { ...garden.plots };
-
-            if (isTree) {
-                const targetKeys = [`${r}-${c}`, `${r}-${c + 1}`, `${r + 1}-${c}`, `${r + 1}-${c + 1}`];
-
-                if (r + 1 >= garden.rows || c + 1 >= garden.cols) {
-                    console.warn('Not enough room for a tree edge here!');
-                    return prev;
-                }
-
-                const isAreaClear = targetKeys.every((key) => !updatedPlots[key]?.plantId);
-                if (!isAreaClear) {
-                    console.warn('Space is blocked by another plant!');
-                    return prev;
-                }
-
-                const plantedAt = new Date().toISOString();
-
-                targetKeys.forEach((key, index) => {
-                    updatedPlots[key] = {
-                        ...(updatedPlots[key] || { sunExposure: 'full', isPlantable: true }),
-                        plantId: plant.perenual_id,
-                        plant: plant,
-                        plantedAt,
-                        isTreeChild: index !== 0,
-                        anchorKey: plotKey,
-                    };
-                });
-            } else {
-                if (updatedPlots[plotKey]?.plantId) return prev;
-
-                updatedPlots[plotKey] = {
-                    ...(updatedPlots[plotKey] || { sunExposure: 'full', isPlantable: true }),
-                    plantId: plant.perenual_id,
-                    plant: plant,
-                    plantedAt: new Date().toISOString(),
-                };
-            }
-
-            return {
+            const updated = {
                 ...prev,
                 [gardenId]: {
                     ...garden,
-                    plots: updatedPlots,
+                    plots: {
+                        ...garden.plots,
+                        [plotKey]: {
+                            ...(garden.plots[plotKey] || { sunExposure: 'full', isPlantable: true }),
+                            plantId: plant.perenual_id,
+                            plant,
+                        },
+                    },
                 },
             };
+            scheduleSave(updated);
+            return updated;
         });
-    }, []);
+    }, [scheduleSave]);
 
-    return {
-        gardens,
-        addGarden,
-        handleMove,
-        handleResize,
-        addPlant,
-    };
+    return { gardens, addGarden, handleMove, handleResize, addPlant, loaded };
 }
