@@ -161,7 +161,7 @@ export default function GardenEditor() {
                                             const plotKey = `${r}-${c}`;
                                             return (
                                                 <Plot
-                                                    key={`${garden.id}-${plotKey}`}
+                                                    key={`${garden.id}-${plotKey}-bg`}
                                                     x={c * PIXELS_PER_FOOT}
                                                     y={r * PIXELS_PER_FOOT}
                                                     data={garden.plots[plotKey]}
@@ -169,6 +169,29 @@ export default function GardenEditor() {
                                                         activeDragPlot?.gardenId === garden.id &&
                                                         activeDragPlot?.plotKey === plotKey
                                                     }
+                                                    timelineDays={timelineDays}
+                                                    renderLayer="background"
+                                                    onPlantMouseOver={handlePlantMouseOver}
+                                                    onPlantMouseOut={handlePlantMouseOut}
+                                                />
+                                            );
+                                        })
+                                    )}
+                                    {Array.from({ length: garden.rows }).map((_, r) =>
+                                        Array.from({ length: garden.cols }).map((_, c) => {
+                                            const plotKey = `${r}-${c}`;
+                                            return (
+                                                <Plot
+                                                    key={`${garden.id}-${plotKey}-fg`}
+                                                    x={c * PIXELS_PER_FOOT}
+                                                    y={r * PIXELS_PER_FOOT}
+                                                    data={garden.plots[plotKey]}
+                                                    isDraggingOver={
+                                                        activeDragPlot?.gardenId === garden.id &&
+                                                        activeDragPlot?.plotKey === plotKey
+                                                    }
+                                                    timelineDays={timelineDays}
+                                                    renderLayer="foreground"
                                                     onPlantMouseOver={handlePlantMouseOver}
                                                     onPlantMouseOut={handlePlantMouseOut}
                                                 />
