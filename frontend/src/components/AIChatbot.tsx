@@ -104,7 +104,7 @@ export default function AIChatbot() {
               setGreeted(true)
               return
             }
-          } catch {}
+          } catch { /* ignore */ }
         }
         if (user && !greeted) showGreeting()
       })
@@ -120,7 +120,7 @@ export default function AIChatbot() {
     try {
       const data = await loadSessionMessages(s.id)
       setMessages(data)
-    } catch {}
+    } catch { /* ignore */ }
   }
 
   const newChat = () => {
@@ -149,7 +149,7 @@ export default function AIChatbot() {
     const reader = new FileReader()
     reader.onload = e => {
       const b64 = (e.target?.result as string).split(',')[1]
-      mode === 'garden' ? setPendingGardenImage(b64) : setPendingImage(b64)
+      if (mode === 'garden') { setPendingGardenImage(b64) } else { setPendingImage(b64) }
     }
     reader.readAsDataURL(file)
   }

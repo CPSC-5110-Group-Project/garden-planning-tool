@@ -12,6 +12,7 @@ export function useGardenData() {
 
     // Load gardens from DB on login
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         if (isGuest) { setLoaded(true); return; }
         loadGardensFromDB()
             .then(data => {

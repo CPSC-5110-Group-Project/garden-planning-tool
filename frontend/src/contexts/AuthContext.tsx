@@ -27,7 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const raw = localStorage.getItem('garden_auth')
       if (raw) return JSON.parse(raw)
-    } catch {}
+    } catch { /* ignore invalid stored auth */ }
     return { user: null, token: null, isGuest: true }
   })
 
